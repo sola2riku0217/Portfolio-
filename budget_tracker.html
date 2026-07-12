@@ -116,7 +116,19 @@ form.inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; 
 .summary-card .balance.negative { color: #C0524A; }
 .chart-wrapper { position: relative; height: 300px; margin-top: 10px; }
 .footer-note { text-align: center; color: #999; font-size: 12px; margin-top: 10px; }
-@media (max-width: 600px) { .container { padding: 0; } }
+
+@media (max-width: 640px) {
+  body { padding: 32px 14px; }
+  .panel { padding: 18px; border-radius: 16px; }
+  .tab-btn { padding: 8px 14px; font-size: 13px; }
+  .card-stage { height: 380px; }
+  .account-row { flex-wrap: wrap; row-gap: 8px; }
+  .account-name { flex: 1 1 100%; order: 1; }
+  .account-dot { order: 0; }
+  .account-deposit { order: 2; }
+  .account-row .btn.danger { order: 3; margin-left: auto; }
+  .chart-wrapper { height: 240px; }
+}
 </style>
 </head>
 <body>
@@ -201,16 +213,23 @@ const SUPABASE_ANON_KEY = 'sb_publishable_uXhfMDnwHB9Mm-fnWovHSw_LAVwqVFv';
 const CLASSIFY_ENDPOINT = SUPABASE_URL + '/functions/v1/classify-receipt';
 
 async function classifyReceiptWithAI(dataUrl) {
+  // Only the 'apikey' header is used - the new sb_publishable_... key is not a JWT,
+  // so it must not be sent as "Authorization: Bearer ...". The classify-receipt
+  // function must have "Enforce JWT Verification" turned OFF in its Security
+  // settings, otherwise Supabase's platform gateway rejects the request with a
+  // 401 before our function code ever runs.
   const res = await fetch(CLASSIFY_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+      'apikey': SUPABASE_ANON_KEY
     },
     body: JSON.stringify({ image: dataUrl })
   });
-  if (!res.ok) throw new Error('classify-receipt failed: ' + res.status);
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => '');
+    throw new Error('classify-receipt failed: ' + res.status + ' ' + bodyText);
+  }
   const json = await res.json();
   if (json.error) throw new Error(json.error);
   return { store: (json.store || '').slice(0, 30), amount: Number(json.amount) || 0 };
@@ -441,7 +460,12 @@ function handleFile(file) {
         receipt.classifiedBy = 'ai';
         finish();
       })
-      .catch(() => runOcrFallback(dataUrl));
+      .catch((err) => {
+        // Logged so it's visible in the browser console (F12) when diagnosing why
+        // AI classification silently fell back to OCR.
+        console.warn('AI classification failed, falling back to OCR:', err);
+        runOcrFallback(dataUrl);
+      });
   });
 }
 

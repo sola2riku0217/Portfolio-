@@ -65,7 +65,15 @@ tr:hover td { background: #E5F2EA; }
 .empty { color: #999; font-size: 13px; padding: 14px 0; text-align: center; }
 .footer-note { text-align: center; color: #999; font-size: 12px; margin-top: 10px; }
 a { color: #4F7F67; }
+.table-scroll { overflow-x: auto; }
 @media (max-width: 800px) { .chart-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  body { padding: 32px 14px; }
+  .panel { padding: 18px; border-radius: 16px; }
+  .names input { width: 130px; }
+  .chart-wrapper { height: 220px; }
+  .chart-wrapper.wide { height: 240px; }
+}
 </style>
 </head>
 <body>
@@ -153,10 +161,12 @@ a { color: #4F7F67; }
 
   <div class="panel">
     <h2 class="mini">🧹 家事マスタ管理（ポイント設定・追加）</h2>
+    <div class="table-scroll">
     <table id="choreTable">
       <thead><tr><th>家事名</th><th>ポイント</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
+    </div>
     <form class="inline" id="choreForm" style="margin-top:14px;">
       <div class="field">
         <label for="newChoreName">新しい家事名</label>

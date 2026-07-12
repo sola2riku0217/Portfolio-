@@ -147,6 +147,23 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   width: 70px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; text-align: right;
   background: #fff; color: #444; font-size: 12px;
 }
+
+@media (max-width: 900px) {
+  body { padding: 12px; }
+  .layout { grid-template-columns: 1fr; }
+  .controls { max-height: none; overflow-y: visible; }
+  .summary { grid-template-columns: repeat(2, 1fr); }
+  .chart-wrapper { height: 220px; }
+  .custom-section { overflow-x: auto; }
+  .custom-item, .custom-header { min-width: 420px; }
+  .toolbar a { margin-left: 0 !important; }
+}
+
+@media (max-width: 480px) {
+  .summary { grid-template-columns: 1fr; }
+  .panel, .chart-container { padding: 14px; border-radius: 14px; }
+  h1 { font-size: 20px; }
+}
 </style>
 </head>
 <body>
