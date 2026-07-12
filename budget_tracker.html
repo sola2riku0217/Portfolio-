@@ -78,6 +78,8 @@ form.inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; 
 .status-unsorted { background: #E5F2EA; color: #4F7F67; }
 .status-sorted { background: #eee; color: #999; }
 .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #F0DBA8; border-top-color: #97690F; border-radius: 50%; animation: spin .8s linear infinite; margin-right: 4px; vertical-align: middle; }
+.receipt-del { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: #bbb; font-size: 16px; line-height: 1; cursor: pointer; transition: .15s; }
+.receipt-del:hover { background: #FBE9E7; color: #C0524A; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* sort tab */
@@ -189,6 +191,30 @@ form.inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; 
 <script>
 const STORAGE_KEY = 'budgetTrackerData_v1';
 const PALETTE = ['#4F7F67','#C9805E','#C9A227','#6B8FA3','#9B7FBF','#C0524A'];
+
+// AI receipt classification (Claude via a Supabase Edge Function proxy - the API key
+// never touches this file). Uses the same Supabase project as the like/comment backend.
+// Falls back to on-device Tesseract OCR automatically if the function isn't deployed yet
+// or the call fails for any reason.
+const SUPABASE_URL = 'https://inndpuhwcdqazlhoborx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_uXhfMDnwHB9Mm-fnWovHSw_LAVwqVFv';
+const CLASSIFY_ENDPOINT = SUPABASE_URL + '/functions/v1/classify-receipt';
+
+async function classifyReceiptWithAI(dataUrl) {
+  const res = await fetch(CLASSIFY_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify({ image: dataUrl })
+  });
+  if (!res.ok) throw new Error('classify-receipt failed: ' + res.status);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return { store: (json.store || '').slice(0, 30), amount: Number(json.amount) || 0 };
+}
 
 function loadData() {
   try {
@@ -322,20 +348,38 @@ function parseOcrText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let store = lines.length ? lines[0].slice(0, 30) : '';
 
-  const totalKeywords = /(合計|お会計|ご請求|総計|小計|計)/;
   const numRe = /[\d,]{3,}/g;
-  let amount = 0;
-  let bestLineScore = -1;
-  lines.forEach(line => {
+  const extractNum = (line) => {
+    if (!line) return null;
     const nums = line.match(numRe);
-    if (!nums) return;
+    if (!nums) return null;
     const val = Math.max(...nums.map(n => parseInt(n.replace(/,/g, ''), 10) || 0));
-    if (totalKeywords.test(line)) {
-      if (val > 0) { amount = val; bestLineScore = 2; }
-    } else if (bestLineScore < 1) {
-      if (val > amount) { amount = val; bestLineScore = Math.max(bestLineScore, 0); }
+    return val > 0 ? val : null;
+  };
+  const excludeRe = /(割引|値引|お預り|お預かり|釣り|おつり|point|ポイント)/i;
+
+  // Priority tiers: 合計 (final total) first, then common synonyms, then 小計 (subtotal) as a weaker fallback.
+  const tiers = [/合\s*計/, /(お会計|ご請求|総計|お買上げ)/, /小\s*計/];
+
+  let amount = 0;
+  for (const pattern of tiers) {
+    for (let i = 0; i < lines.length; i++) {
+      if (!pattern.test(lines[i]) || excludeRe.test(lines[i])) continue;
+      // The amount is usually on the same line as "合計", but OCR sometimes
+      // splits the label and the value onto separate lines - check the next line too.
+      let val = extractNum(lines[i]) || extractNum(lines[i + 1]);
+      if (val) { amount = val; break; }
     }
-  });
+    if (amount) break;
+  }
+
+  if (!amount) {
+    // Fallback: largest number found anywhere on the receipt.
+    lines.forEach(line => {
+      const val = extractNum(line);
+      if (val && val > amount) amount = val;
+    });
+  }
   return { store, amount };
 }
 
@@ -356,16 +400,17 @@ function handleFile(file) {
   renderCaptureList();
   updateUnsortedBadge();
 
-  resizeImage(file).then(dataUrl => {
-    receipt.image = dataUrl;
+  const finish = () => {
+    receipt.status = 'unsorted';
     saveData();
     renderCaptureList();
+    updateUnsortedBadge();
+  };
+
+  const runOcrFallback = (dataUrl) => {
     if (typeof Tesseract === 'undefined') {
-      receipt.store = '';
-      receipt.status = 'unsorted';
-      saveData();
-      renderCaptureList();
-      updateUnsortedBadge();
+      receipt.store = receipt.store === '読み取り中...' ? '' : receipt.store;
+      finish();
       return;
     }
     Tesseract.recognize(dataUrl, 'jpn+eng')
@@ -374,18 +419,29 @@ function handleFile(file) {
         receipt.ocrText = ocrData.text || '';
         receipt.store = parsed.store || '';
         receipt.amount = parsed.amount || 0;
-        receipt.status = 'unsorted';
-        saveData();
-        renderCaptureList();
-        updateUnsortedBadge();
+        finish();
       })
       .catch(() => {
         receipt.store = '';
-        receipt.status = 'unsorted';
-        saveData();
-        renderCaptureList();
-        updateUnsortedBadge();
+        finish();
       });
+  };
+
+  resizeImage(file).then(dataUrl => {
+    receipt.image = dataUrl;
+    saveData();
+    renderCaptureList();
+
+    // Try AI classification first; silently fall back to on-device OCR on any failure
+    // (e.g. the Supabase Edge Function hasn't been deployed yet).
+    classifyReceiptWithAI(dataUrl)
+      .then(parsed => {
+        receipt.store = parsed.store || '';
+        receipt.amount = parsed.amount || 0;
+        receipt.classifiedBy = 'ai';
+        finish();
+      })
+      .catch(() => runOcrFallback(dataUrl));
   });
 }
 
@@ -409,6 +465,7 @@ function renderCaptureList() {
           <div class="amount-row">¥<input class="amount" type="number" value="${r.amount}" data-id="${r.id}" data-field="amount"></div>
         </div>
         <span class="status-tag ${statusClass}">${statusLabel}${acc ? ' → ' + escapeHtml(acc.name) : ''}</span>
+        <button type="button" class="receipt-del" data-id="${r.id}" title="削除">✕</button>
       </div>
     `;
   }).join('');
@@ -422,6 +479,27 @@ function renderCaptureList() {
       saveData();
     });
   });
+  wrap.querySelectorAll('.receipt-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = Number(e.target.dataset.id);
+      deleteReceipt(id);
+    });
+  });
+}
+
+// Deletes a receipt regardless of its status (unsorted, processing, or already
+// sorted into an account) and refreshes every view that depends on it.
+function deleteReceipt(id) {
+  const r = data.receipts.find(x => x.id === id);
+  if (!r) return;
+  const msg = r.status === 'sorted' ? 'この仕分け済みレシートを削除しますか？（口座の集計からも除外されます）' : 'このレシートを削除しますか？';
+  if (!confirm(msg)) return;
+  data.receipts = data.receipts.filter(x => x.id !== id);
+  saveData();
+  updateUnsortedBadge();
+  renderCaptureList();
+  renderSortStack();
+  renderSummary();
 }
 
 function updateUnsortedBadge() {
@@ -525,13 +603,15 @@ function setupDrag(card, receipt) {
   const onUp = () => {
     if (!dragging) return;
     dragging = false;
-    const pills = Array.from(document.querySelectorAll('.account-pill'));
-    const nearest = pills.find(p => p.classList.contains('highlight'));
-    if (Math.abs(dx) > 70 && nearest) {
+    const dist = Math.hypot(dx, dy);
+    const nearest = dist > 40 ? findNearestPill(card) : null;
+
+    if (dist > 70 && nearest) {
       const flyX = dx > 0 ? window.innerWidth : -window.innerWidth;
       card.style.transition = 'transform .4s ease';
       card.style.transform = `translate(${flyX}px, ${dy}px) rotate(${dx / 10}deg)`;
       const accountId = Number(nearest.dataset.id);
+      card.style.pointerEvents = 'none';
       setTimeout(() => assignReceipt(receipt.id, accountId), 350);
     } else {
       card.style.transition = 'transform .3s ease';
@@ -551,21 +631,34 @@ function setupDrag(card, receipt) {
 function clearPillHighlight() {
   document.querySelectorAll('.account-pill').forEach(p => p.classList.remove('highlight'));
 }
-function highlightNearestPill(dx) {
+
+// Finds the account pill geometrically closest to the card's current (post-transform)
+// position, using real 2D bounding-box centers so it works regardless of how many
+// pills there are or whether they wrap onto a second row.
+function findNearestPill(card) {
   const pills = Array.from(document.querySelectorAll('.account-pill'));
-  clearPillHighlight();
-  if (Math.abs(dx) < 40 || !pills.length) return;
-  const cardStage = document.getElementById('cardStage');
-  const stageCenter = cardStage.getBoundingClientRect().left + cardStage.getBoundingClientRect().width / 2;
-  const targetX = stageCenter + dx;
+  if (!pills.length) return null;
+  const cardRect = card.getBoundingClientRect();
+  const cardCenterX = cardRect.left + cardRect.width / 2;
+  const cardCenterY = cardRect.top + cardRect.height / 2;
   let nearest = null, minDist = Infinity;
   pills.forEach(p => {
     const rect = p.getBoundingClientRect();
-    const center = rect.left + rect.width / 2;
-    const d = Math.abs(center - targetX);
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const d = Math.hypot(cx - cardCenterX, cy - cardCenterY);
     if (d < minDist) { minDist = d; nearest = p; }
   });
-  if (nearest && minDist < 150) nearest.classList.add('highlight');
+  return nearest;
+}
+
+function highlightNearestPill(dx) {
+  clearPillHighlight();
+  if (Math.abs(dx) < 40) return;
+  const card = document.getElementById('swipeCard');
+  if (!card) return;
+  const nearest = findNearestPill(card);
+  if (nearest) nearest.classList.add('highlight');
 }
 
 /* ================= Summary ================= */
