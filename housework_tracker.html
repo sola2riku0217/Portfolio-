@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>夫婦の家事分担トラッカー</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+  margin: 0; padding: 60px 24px;
+  background: radial-gradient(circle at top, #1e3a8a 0%, #111 40%, #000 100%);
+  background-attachment: fixed;
+  color: #eee;
+  min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+.eyebrow { display: block; font-size: 13px; letter-spacing: .15em; text-transform: uppercase; color: #4f8cff; margin-bottom: 10px; font-weight: 600; }
+h1 { color: #fff; font-size: clamp(32px,4vw,46px); font-weight: 700; margin: 0 0 10px; background: linear-gradient(180deg,#ffffff,#8fb3ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h2 { color: #fff; margin: 0 0 18px; font-size: 22px; font-weight: 700; }
+h2.mini { font-size: 14px; font-weight: 600; color: #9db9ff; margin: 0 0 12px; }
+.sub { color: #9aa3b5; font-size: 15px; margin: 0 0 40px; max-width: 700px; }
+.panel { position: relative; background: #151515; border-radius: 25px; padding: 30px; box-shadow: 0 2px 20px rgba(0,0,0,0.3); margin-bottom: 26px; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#4f8cff,transparent); }
+.names { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+.names label { font-size: 13px; color: #9aa3b5; display: flex; flex-direction: column; gap: 6px; }
+.names input { padding: 9px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; font-size: 14px; background: #1c1c1c; color: #fff; width: 150px; }
+.summary-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+select { padding: 9px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; font-size: 13px; background: #1c1c1c; color: #fff; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; }
+.card { padding: 18px; border-radius: 16px; text-align: center; background: #1c1c1c; border: 1px solid rgba(255,255,255,.06); }
+.card.p1 { border-color: rgba(79,140,255,.35); }
+.card.p2 { border-color: rgba(255,159,79,.35); }
+.card .label { font-size: 12px; color: #9aa3b5; }
+.card .value { font-size: 26px; font-weight: bold; margin-top: 8px; color: #fff; }
+.bar-wrap { height: 20px; border-radius: 10px; overflow: hidden; display: flex; margin-top: 12px; background: #333; }
+.bar-wrap div { height: 100%; }
+form.inline { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 4px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #9aa3b5; }
+.field input, .field select { padding: 9px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; font-size: 13px; background: #1c1c1c; color: #fff; }
+.field input[type="text"] { background: #1c1c1c; }
+.toggle-group { display: flex; gap: 8px; }
+.toggle-group button {
+  padding: 9px 18px; border: 1px solid rgba(79,140,255,.5); background: transparent; color: #9db9ff;
+  border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600; transition: .2s;
+}
+.toggle-group button.active { background: #4f8cff; color: #fff; border-color: #4f8cff; }
+.btn { padding: 10px 22px; border: none; border-radius: 999px; background: #4f8cff; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: .2s; }
+.btn:hover { background: #78a6ff; }
+.btn.danger { background: transparent; color: #ff7b7b; border: 1px solid rgba(255,123,123,.4); padding: 6px 14px; font-size: 12px; border-radius: 999px; }
+.btn.danger:hover { background: rgba(255,123,123,.1); }
+.btn.ghost { background: transparent; color: #9aa3b5; border: 1px solid rgba(255,255,255,.15); }
+.btn.ghost:hover { background: rgba(255,255,255,.05); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+th, td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: left; color: #ddd; }
+th { background: #1c1c1c; color: #9aa3b5; font-weight: 600; position: sticky; top: 0; }
+tr:hover td { background: rgba(79,140,255,.05); }
+.chore-row input[type="number"] { width: 70px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: #1c1c1c; color: #fff; text-align: right; }
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.chart-wrapper { position: relative; height: 260px; }
+.chart-wrapper.wide { height: 300px; }
+.full { grid-column: 1 / -1; }
+.empty { color: #777; font-size: 13px; padding: 14px 0; text-align: center; }
+.footer-note { text-align: center; color: #666; font-size: 12px; margin-top: 10px; }
+a { color: #4f8cff; }
+@media (max-width: 800px) { .chart-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="eyebrow">Life.AI Tools</span>
+  <h1>夫婦の家事分担トラッカー</h1>
+  <p class="sub">家事にポイントを設定し、日々の分担を記録・可視化します。データはこのブラウザ内に自動保存されます。</p>
+
+  <div class="panel">
+    <h2 class="mini">👤 名前設定</h2>
+    <div class="names">
+      <label>ひとり目の呼び名
+        <input type="text" id="name0" value="夫">
+      </label>
+      <label>ふたり目の呼び名
+        <input type="text" id="name1" value="妻">
+      </label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="summary-top">
+      <h2 class="mini" style="margin:0;">📈 集計サマリー</h2>
+      <select id="periodSelect">
+        <option value="week">今週</option>
+        <option value="month">今月</option>
+        <option value="all">全期間</option>
+      </select>
+    </div>
+    <div class="cards">
+      <div class="card p1"><div class="label" id="cardName0">夫</div><div class="value" id="cardPts0">0 pt</div></div>
+      <div class="card p2"><div class="label" id="cardName1">妻</div><div class="value" id="cardPts1">0 pt</div></div>
+      <div class="card ratio">
+        <div class="label">分担割合</div>
+        <div class="value" id="cardRatio">- / -</div>
+        <div class="bar-wrap"><div id="ratioBar0" style="background:#4f8cff;"></div><div id="ratioBar1" style="background:#ff9f4f;"></div></div>
+      </div>
+      <div class="card ratio"><div class="label">合計ポイント</div><div class="value" id="cardTotal">0 pt</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="mini">✅ 家事を記録する</h2>
+    <form class="inline" id="logForm">
+      <div class="field">
+        <label for="logDate">日付</label>
+        <input type="date" id="logDate" required>
+      </div>
+      <div class="field">
+        <label>担当</label>
+        <div class="toggle-group" id="personToggle">
+          <button type="button" data-p="0" class="active">夫</button>
+          <button type="button" data-p="1">妻</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="logChore">家事内容</label>
+        <select id="logChore"></select>
+      </div>
+      <div class="field">
+        <label for="logQty">回数</label>
+        <input type="number" id="logQty" value="1" min="1" style="width:70px;">
+      </div>
+      <button type="submit" class="btn">＋ 記録する</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2 class="mini">📊 グラフで見る</h2>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h2 class="mini" style="font-size:13px;">ポイント分担割合（選択期間）</h2>
+        <div class="chart-wrapper"><canvas id="donutChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h2 class="mini" style="font-size:13px;">家事カテゴリ別ポイント（選択期間）</h2>
+        <div class="chart-wrapper"><canvas id="categoryChart"></canvas></div>
+      </div>
+      <div class="chart-box full">
+        <h2 class="mini" style="font-size:13px;">週別ポイント推移（直近8週間）</h2>
+        <div class="chart-wrapper wide"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="mini">🧹 家事マスタ管理（ポイント設定・追加）</h2>
+    <table id="choreTable">
+      <thead><tr><th>家事名</th><th>ポイント</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <form class="inline" id="choreForm" style="margin-top:14px;">
+      <div class="field">
+        <label for="newChoreName">新しい家事名</label>
+        <input type="text" id="newChoreName" placeholder="例: 窓拭き" required style="width:180px;">
+      </div>
+      <div class="field">
+        <label for="newChorePts">ポイント</label>
+        <input type="number" id="newChorePts" value="1" min="1" style="width:80px;">
+      </div>
+      <button type="submit" class="btn">＋ 家事を追加</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2 class="mini">🗒 記録一覧</h2>
+    <div style="max-height:320px;overflow:auto;">
+      <table id="logTable">
+        <thead><tr><th>日付</th><th>担当</th><th>家事</th><th>回数</th><th>ポイント</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty" id="logEmpty" style="display:none;">まだ記録がありません。上のフォームから追加してください。</div>
+  </div>
+
+  <div style="text-align:right;">
+    <button class="btn ghost" id="resetBtn">全データをリセット</button>
+  </div>
+  <p class="footer-note">© Housework Tracker</p>
+</div>
+
+<script>
+Chart.defaults.color = '#9aa3b5';
+Chart.defaults.borderColor = 'rgba(255,255,255,.08)';
+Chart.defaults.font.family = "'Inter', -apple-system, 'Hiragino Sans', sans-serif";
+
+const STORAGE_KEY = 'houseworkTrackerData_v1';
+const COLORS = ['#4f8cff', '#ff9f4f'];
+
+const defaultChores = [
+  { id: 1, name: '料理（食事準備）', points: 4 },
+  { id: 2, name: '皿洗い・片付け', points: 2 },
+  { id: 3, name: '洗濯（洗う）', points: 2 },
+  { id: 4, name: '洗濯（干す・畳む）', points: 3 },
+  { id: 5, name: '掃除機がけ', points: 3 },
+  { id: 6, name: '水回り掃除（風呂・トイレ・洗面）', points: 3 },
+  { id: 7, name: 'ゴミ出し', points: 1 },
+  { id: 8, name: '買い物', points: 3 },
+  { id: 9, name: '子どもの送迎', points: 4 },
+  { id: 10, name: '子どもの世話（遊び・寝かしつけ）', points: 3 },
+];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.chores) && Array.isArray(parsed.logs)) return parsed;
+    }
+  } catch (e) {}
+  return { names: ['夫', '妻'], chores: JSON.parse(JSON.stringify(defaultChores)), logs: [], nextChoreId: 11, nextLogId: 1 };
+}
+
+let data = loadData();
+if (!data.names) data.names = ['夫', '妻'];
+if (data.nextChoreId == null) data.nextChoreId = Math.max(0, ...data.chores.map(c => c.id)) + 1;
+if (data.nextLogId == null) data.nextLogId = Math.max(0, ...data.logs.map(l => l.id)) + 1;
+
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function fmtDate(d) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function getMonday(d) {
+  d = new Date(d);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+let currentPeriod = 'week';
+let charts = {};
+
+function choreName(id) {
+  const c = data.chores.find(c => c.id === id);
+  return c ? c.name : '（削除済み）';
+}
+
+function filteredLogs(period) {
+  const today = new Date();
+  if (period === 'all') return data.logs;
+  if (period === 'week') {
+    const monday = getMonday(today);
+    const mondayStr = fmtDate(monday);
+    return data.logs.filter(l => l.date >= mondayStr);
+  }
+  if (period === 'month') {
+    const prefix = fmtDate(today).slice(0, 7);
+    return data.logs.filter(l => l.date.slice(0, 7) === prefix);
+  }
+  return data.logs;
+}
+
+function computeTotals(logs) {
+  const totals = [0, 0];
+  logs.forEach(l => { totals[l.person] += l.points * l.qty; });
+  return totals;
+}
+
+function renderNames() {
+  document.getElementById('name0').value = data.names[0];
+  document.getElementById('name1').value = data.names[1];
+  document.getElementById('cardName0').textContent = data.names[0];
+  document.getElementById('cardName1').textContent = data.names[1];
+  const toggleBtns = document.querySelectorAll('#personToggle button');
+  toggleBtns[0].textContent = data.names[0];
+  toggleBtns[1].textContent = data.names[1];
+}
+
+function renderSummary() {
+  const logs = filteredLogs(currentPeriod);
+  const totals = computeTotals(logs);
+  const total = totals[0] + totals[1];
+  document.getElementById('cardPts0').textContent = totals[0].toLocaleString() + ' pt';
+  document.getElementById('cardPts1').textContent = totals[1].toLocaleString() + ' pt';
+  document.getElementById('cardTotal').textContent = total.toLocaleString() + ' pt';
+  const pct0 = total > 0 ? Math.round((totals[0] / total) * 100) : 50;
+  const pct1 = 100 - pct0;
+  document.getElementById('cardRatio').textContent = total > 0 ? `${pct0}% / ${pct1}%` : '- / -';
+  document.getElementById('ratioBar0').style.width = pct0 + '%';
+  document.getElementById('ratioBar1').style.width = pct1 + '%';
+}
+
+function renderChoreSelect() {
+  const sel = document.getElementById('logChore');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  data.chores.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `${c.name}（${c.points}pt）`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
+
+function renderChoreTable() {
+  const tbody = document.querySelector('#choreTable tbody');
+  tbody.innerHTML = '';
+  data.chores.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.className = 'chore-row';
+    tr.innerHTML = `
+      <td>${c.name}</td>
+      <td><input type="number" min="1" value="${c.points}" data-id="${c.id}" class="choreEditPts"></td>
+      <td><button class="btn danger" data-id="${c.id}" data-action="delChore">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('.choreEditPts').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const id = Number(e.target.dataset.id);
+      const val = Math.max(1, Number(e.target.value) || 1);
+      const c = data.chores.find(c => c.id === id);
+      if (c) { c.points = val; saveData(); renderChoreSelect(); renderAll(); }
+    });
+  });
+  tbody.querySelectorAll('[data-action="delChore"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = Number(e.target.dataset.id);
+      if (!confirm('この家事をマスタから削除しますか？（過去の記録は残ります）')) return;
+      data.chores = data.chores.filter(c => c.id !== id);
+      saveData();
+      renderChoreTable();
+      renderChoreSelect();
+    });
+  });
+}
+
+function renderLogTable() {
+  const tbody = document.querySelector('#logTable tbody');
+  tbody.innerHTML = '';
+  const sorted = [...data.logs].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  document.getElementById('logEmpty').style.display = sorted.length ? 'none' : 'block';
+  sorted.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${l.date}</td>
+      <td>${data.names[l.person]}</td>
+      <td>${choreName(l.choreId)}</td>
+      <td>${l.qty}</td>
+      <td>${(l.points * l.qty).toLocaleString()} pt</td>
+      <td><button class="btn danger" data-id="${l.id}" data-action="delLog">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('[data-action="delLog"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = Number(e.target.dataset.id);
+      data.logs = data.logs.filter(l => l.id !== id);
+      saveData();
+      renderAll();
+    });
+  });
+}
+
+function renderCharts() {
+  const logs = filteredLogs(currentPeriod);
+  const totals = computeTotals(logs);
+
+  if (charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: [data.names[0], data.names[1]],
+      datasets: [{ data: totals, backgroundColor: COLORS }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  const choreTotals = {};
+  logs.forEach(l => {
+    const name = choreName(l.choreId);
+    if (!choreTotals[name]) choreTotals[name] = [0, 0];
+    choreTotals[name][l.person] += l.points * l.qty;
+  });
+  const choreNames = Object.keys(choreTotals).sort((a, b) => (choreTotals[b][0] + choreTotals[b][1]) - (choreTotals[a][0] + choreTotals[a][1])).slice(0, 8);
+
+  if (charts.category) charts.category.destroy();
+  charts.category = new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+      labels: choreNames,
+      datasets: [
+        { label: data.names[0], data: choreNames.map(n => choreTotals[n][0]), backgroundColor: COLORS[0] },
+        { label: data.names[1], data: choreNames.map(n => choreTotals[n][1]), backgroundColor: COLORS[1] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { position: 'bottom' } },
+      scales: { x: { stacked: true, title: { display: true, text: 'pt' } }, y: { stacked: true } }
+    }
+  });
+
+  const weeks = [];
+  const today = new Date();
+  let cursor = getMonday(today);
+  for (let i = 0; i < 8; i++) { weeks.unshift(new Date(cursor)); cursor.setDate(cursor.getDate() - 7); }
+  const weekLabels = weeks.map(w => {
+    const end = new Date(w); end.setDate(end.getDate() + 6);
+    return `${w.getMonth()+1}/${w.getDate()}`;
+  });
+  const weekTotals = weeks.map(w => {
+    const start = fmtDate(w);
+    const endDate = new Date(w); endDate.setDate(endDate.getDate() + 6);
+    const end = fmtDate(endDate);
+    const inRange = data.logs.filter(l => l.date >= start && l.date <= end);
+    return computeTotals(inRange);
+  });
+
+  if (charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: [
+        { label: data.names[0], data: weekTotals.map(t => t[0]), backgroundColor: COLORS[0] },
+        { label: data.names[1], data: weekTotals.map(t => t[1]), backgroundColor: COLORS[1] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { title: { display: true, text: 'pt' } }, x: { title: { display: true, text: '週（開始日）' } } }
+    }
+  });
+}
+
+function renderAll() {
+  renderNames();
+  renderSummary();
+  renderChoreSelect();
+  renderChoreTable();
+  renderLogTable();
+  renderCharts();
+}
+
+document.getElementById('logDate').value = fmtDate(new Date());
+
+document.getElementById('name0').addEventListener('change', (e) => { data.names[0] = e.target.value || '夫'; saveData(); renderAll(); });
+document.getElementById('name1').addEventListener('change', (e) => { data.names[1] = e.target.value || '妻'; saveData(); renderAll(); });
+
+let selectedPerson = 0;
+document.querySelectorAll('#personToggle button').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    selectedPerson = Number(e.target.dataset.p);
+    document.querySelectorAll('#personToggle button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+  });
+});
+
+document.getElementById('logForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const date = document.getElementById('logDate').value;
+  const choreId = Number(document.getElementById('logChore').value);
+  const qty = Math.max(1, Number(document.getElementById('logQty').value) || 1);
+  const chore = data.chores.find(c => c.id === choreId);
+  if (!chore || !date) return;
+  data.logs.push({ id: data.nextLogId++, date, person: selectedPerson, choreId, points: chore.points, qty });
+  saveData();
+  document.getElementById('logQty').value = 1;
+  renderAll();
+});
+
+document.getElementById('choreForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('newChoreName').value.trim();
+  const points = Math.max(1, Number(document.getElementById('newChorePts').value) || 1);
+  if (!name) return;
+  data.chores.push({ id: data.nextChoreId++, name, points });
+  saveData();
+  document.getElementById('newChoreName').value = '';
+  document.getElementById('newChorePts').value = 1;
+  renderChoreTable();
+  renderChoreSelect();
+});
+
+document.getElementById('periodSelect').addEventListener('change', (e) => {
+  currentPeriod = e.target.value;
+  renderSummary();
+  renderCharts();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('すべての記録・設定をリセットします。よろしいですか？')) return;
+  data = { names: ['夫', '妻'], chores: JSON.parse(JSON.stringify(defaultChores)), logs: [], nextChoreId: 11, nextLogId: 1 };
+  saveData();
+  renderAll();
+});
+
+renderAll();
+</script>
+</body>
+</html>

@@ -2,145 +2,152 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ライフプランシミュレーター</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
   margin: 0; padding: 20px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8edf3 100%);
-  color: #333;
+  background: radial-gradient(circle at top, #1e3a8a 0%, #111 40%, #000 100%);
+  background-attachment: fixed;
+  color: #ddd;
 }
-h1 { color: #2c3e50; border-bottom: 3px solid #5b9bd5; padding-bottom: 10px; }
-h2 { color: #4472C4; margin-top: 24px; font-size: 16px; border-left: 4px solid #5b9bd5; padding-left: 10px; }
+h1 { color: #fff; font-size: clamp(24px,3vw,32px); font-weight: 700; margin: 0 0 20px; background: linear-gradient(180deg,#ffffff,#8fb3ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h2 { color: #9db9ff; margin-top: 24px; font-size: 15px; font-weight: 600; border-left: 3px solid #4f8cff; padding-left: 10px; }
 .container { max-width: 1400px; margin: 0 auto; }
 .layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
-.panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.panel { position: relative; background: #151515; border-radius: 20px; padding: 20px; box-shadow: 0 2px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#4f8cff,transparent); }
 .controls { max-height: 90vh; overflow-y: auto; }
 .field { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-.field label { flex: 1; color: #555; }
+.field label { flex: 1; color: #9aa3b5; }
 .field input, .field select {
-  width: 100px; padding: 4px 8px;
-  border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
-  text-align: right; background: #ddeeff;
+  width: 100px; padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,.12); border-radius: 5px; font-size: 13px;
+  text-align: right; background: #1c1c1c; color: #fff;
 }
-.field input:focus, .field select:focus { outline: none; border-color: #5b9bd5; }
-.tier-group { background: #f8f9fb; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+.field input:focus, .field select:focus { outline: none; border-color: #4f8cff; }
+.tier-group { background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,.05); }
 .tier-row { display: grid; grid-template-columns: 80px 1fr 1fr; gap: 6px; margin-bottom: 4px; align-items: center; font-size: 12px; }
-.tier-row input { width: 80px; padding: 3px 6px; text-align: right; border: 1px solid #ccc; border-radius: 4px; background: #ddeeff; font-size: 12px; }
+.tier-row input { width: 80px; padding: 3px 6px; text-align: right; border: 1px solid rgba(255,255,255,.12); border-radius: 4px; background: #1c1c1c; color: #fff; font-size: 12px; }
 .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-.metric { background: #fff2cc; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #f0d04f; }
-.metric.danger { background: #ffc7ce; border-color: #d04545; }
-.metric.success { background: #c6efce; border-color: #4caf50; }
-.metric .label { font-size: 11px; color: #666; }
-.metric .value { font-size: 18px; font-weight: bold; margin-top: 4px; color: #2c3e50; }
-.chart-container { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+.metric { background: rgba(255,193,7,.08); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,193,7,.35); }
+.metric.danger { background: rgba(255,80,80,.1); border-color: rgba(255,80,80,.45); }
+.metric.success { background: rgba(76,175,80,.1); border-color: rgba(76,175,80,.4); }
+.metric .label { font-size: 11px; color: #9aa3b5; }
+.metric .value { font-size: 18px; font-weight: bold; margin-top: 4px; color: #fff; }
+.chart-container { position: relative; background: #151515; padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.chart-container::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#4f8cff,transparent); }
 .chart-wrapper { position: relative; height: 280px; }
 .table-wrap { max-height: 400px; overflow: auto; margin-top: 10px; }
 table { border-collapse: collapse; font-size: 11px; width: 100%; }
-th, td { padding: 4px 6px; border: 1px solid #ddd; text-align: right; white-space: nowrap; }
-th { background: #5b9bd5; color: white; position: sticky; top: 0; font-weight: 600; }
-tr.bankrupt td { background: #ffe0e0; }
-tr.bankrupt td.flag { color: #c00; font-weight: bold; }
-td.edu-clickable { cursor: pointer; color: #4472C4; font-weight: 600; }
-td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
+th, td { padding: 4px 6px; border: 1px solid rgba(255,255,255,.08); text-align: right; white-space: nowrap; color: #ddd; }
+th { background: #1c1c1c; color: #9db9ff; position: sticky; top: 0; font-weight: 600; }
+tr.bankrupt td { background: rgba(255,80,80,.15); }
+tr.bankrupt td.flag { color: #ff7b7b; font-weight: bold; }
+td.edu-clickable { cursor: pointer; color: #9db9ff; font-weight: 600; }
+td.edu-clickable:hover { background: rgba(79,140,255,.15); text-decoration: underline; }
 .preset-buttons { display: flex; gap: 6px; margin-bottom: 8px; }
 .preset-buttons button {
-  flex: 1; padding: 6px; border: 1px solid #5b9bd5; background: white; color: #5b9bd5;
-  border-radius: 4px; cursor: pointer; font-size: 12px;
+  flex: 1; padding: 6px; border: 1px solid rgba(79,140,255,.5); background: transparent; color: #9db9ff;
+  border-radius: 999px; cursor: pointer; font-size: 12px;
 }
-.preset-buttons button.active { background: #5b9bd5; color: white; }
-.note { font-size: 11px; color: #888; font-style: italic; margin-top: 4px; }
+.preset-buttons button.active { background: #4f8cff; color: white; border-color: #4f8cff; }
+.note { font-size: 11px; color: #777; font-style: italic; margin-top: 4px; }
 
 /* Custom expenses */
-.custom-section { background: #f8f9fb; padding: 10px; border-radius: 6px; margin-top: 8px; }
+.custom-section { background: #1a1a1a; padding: 10px; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(255,255,255,.05); }
 .custom-item { display: grid; grid-template-columns: 1fr 55px 55px 45px 60px 22px; gap: 3px; margin-bottom: 6px; font-size: 11px; align-items: center; }
 .custom-item input, .custom-item select {
-  width: 100%; padding: 3px 4px; border: 1px solid #ccc; border-radius: 3px; background: #ddeeff; font-size: 11px; text-align: right;
+  width: 100%; padding: 3px 4px; border: 1px solid rgba(255,255,255,.12); border-radius: 3px; background: #1c1c1c; color: #fff; font-size: 11px; text-align: right;
 }
 .custom-item input[type="text"] { text-align: left; }
 .custom-item .del-btn {
-  width: 22px; height: 22px; border: 1px solid #d04545; background: white; color: #c00; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 0;
+  width: 22px; height: 22px; border: 1px solid rgba(255,123,123,.5); background: transparent; color: #ff7b7b; border-radius: 3px; cursor: pointer; font-size: 12px; padding: 0;
 }
-.custom-item .del-btn:hover { background: #ffe0e0; }
+.custom-item .del-btn:hover { background: rgba(255,123,123,.15); }
 .add-btn {
-  width: 100%; padding: 6px; border: 1px dashed #5b9bd5; background: white; color: #5b9bd5;
-  border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px;
+  width: 100%; padding: 6px; border: 1px dashed rgba(79,140,255,.5); background: transparent; color: #9db9ff;
+  border-radius: 8px; cursor: pointer; font-size: 12px; margin-top: 4px;
 }
-.add-btn:hover { background: #f0f7fc; }
-.custom-header { display: grid; grid-template-columns: 1fr 55px 55px 45px 60px 22px; gap: 3px; font-size: 10px; color: #888; margin-bottom: 4px; font-weight: 600; }
+.add-btn:hover { background: rgba(79,140,255,.08); }
+.custom-header { display: grid; grid-template-columns: 1fr 55px 55px 45px 60px 22px; gap: 3px; font-size: 10px; color: #777; margin-bottom: 4px; font-weight: 600; }
 .custom-header span { padding: 0 4px; }
 .rate-tier-row { display: grid; grid-template-columns: 90px 1fr; gap: 6px; margin-bottom: 4px; align-items: center; font-size: 12px; }
-.rate-tier-row input { width: 100%; padding: 3px 6px; text-align: right; border: 1px solid #ccc; border-radius: 4px; background: #ddeeff; font-size: 12px; }
+.rate-tier-row input { width: 100%; padding: 3px 6px; text-align: right; border: 1px solid rgba(255,255,255,.12); border-radius: 4px; background: #1c1c1c; color: #fff; font-size: 12px; }
 .calc-row { display: flex; justify-content: space-between; padding: 2px 0; }
 .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
 .toolbar button {
-  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  padding: 9px 18px; border-radius: 999px; cursor: pointer; font-size: 13px;
   font-weight: 600; border: 1px solid; transition: all 0.15s;
 }
-.toolbar button:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.toolbar button:hover { transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 .btn-save { background: #4CAF50; color: white; border-color: #3d8c40; }
-.btn-load { background: #2196F3; color: white; border-color: #1976D2; }
-.btn-reset { background: white; color: #c00; border-color: #c00; }
-.save-status { font-size: 12px; color: #666; margin-left: 8px; }
-.save-status.success { color: #2c7a2c; font-weight: 600; }
+.btn-load { background: #4f8cff; color: white; border-color: #4f8cff; }
+.btn-reset { background: transparent; color: #ff7b7b; border-color: rgba(255,123,123,.5); }
+.save-status { font-size: 12px; color: #9aa3b5; margin-left: 8px; }
+.save-status.success { color: #6fcf6f; font-weight: 600; }
 .loan-ratio-bar {
-  background: linear-gradient(135deg, #fff7d6 0%, #ffe9a8 100%);
-  border: 2px solid #f0c040; border-radius: 10px;
+  background: rgba(255,193,7,.08);
+  border: 1px solid rgba(255,193,7,.35); border-radius: 16px;
   padding: 14px 20px; margin-bottom: 16px;
   display: flex; flex-wrap: wrap; gap: 18px; align-items: center;
   font-size: 14px;
 }
-.loan-ratio-bar .title { font-weight: 700; color: #6b4d00; font-size: 15px; }
+.loan-ratio-bar .title { font-weight: 700; color: #ffd873; font-size: 15px; }
 .loan-ratio-bar .ratio { display: flex; align-items: baseline; gap: 6px; }
-.loan-ratio-bar .ratio .label { color: #6b4d00; font-size: 12px; }
-.loan-ratio-bar .ratio .value { font-weight: 700; font-size: 20px; color: #2c3e50; }
-.loan-ratio-bar .ratio .value.safe { color: #2c7a2c; }
-.loan-ratio-bar .ratio .value.warn { color: #ce8000; }
-.loan-ratio-bar .ratio .value.danger { color: #c00; }
-.loan-ratio-bar .sub { font-size: 11px; color: #777; margin-left: 4px; }
+.loan-ratio-bar .ratio .label { color: #ffd873; font-size: 12px; }
+.loan-ratio-bar .ratio .value { font-weight: 700; font-size: 20px; color: #fff; }
+.loan-ratio-bar .ratio .value.safe { color: #6fcf6f; }
+.loan-ratio-bar .ratio .value.warn { color: #ffb84f; }
+.loan-ratio-bar .ratio .value.danger { color: #ff7b7b; }
+.loan-ratio-bar .sub { font-size: 11px; color: #9aa3b5; margin-left: 4px; }
 
 /* View education button */
 .view-detail-btn {
-  margin-left: 8px; padding: 3px 10px;
-  border: 1px solid #4472C4; background: white; color: #4472C4;
-  border-radius: 4px; cursor: pointer; font-size: 11px;
+  margin-left: 8px; padding: 4px 12px;
+  border: 1px solid rgba(79,140,255,.5); background: transparent; color: #9db9ff;
+  border-radius: 999px; cursor: pointer; font-size: 11px;
 }
-.view-detail-btn:hover { background: #4472C4; color: white; }
+.view-detail-btn:hover { background: #4f8cff; color: white; }
 
 /* Modal */
 .modal-overlay {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7);
   z-index: 1000;
   align-items: center; justify-content: center;
 }
 .modal-overlay.show { display: flex; }
 .modal {
-  background: white; border-radius: 12px; padding: 24px;
+  background: #151515; border-radius: 20px; padding: 24px;
   max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,.08);
 }
-.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #5b9bd5; padding-bottom: 12px; margin-bottom: 16px; }
-.modal-header h2 { margin: 0; border: none; padding: 0; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4f8cff; padding-bottom: 12px; margin-bottom: 16px; }
+.modal-header h2 { margin: 0; border: none; padding: 0; color: #fff; }
 .modal-close {
-  width: 32px; height: 32px; border: none; background: #f0f0f0;
+  width: 32px; height: 32px; border: none; background: #1c1c1c; color: #fff;
   border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1;
 }
-.modal-close:hover { background: #e0e0e0; }
+.modal-close:hover { background: #2a2a2a; }
 .modal table { width: 100%; font-size: 12px; }
-.modal th { background: #5b9bd5; padding: 8px; }
+.modal th { background: #1c1c1c; padding: 8px; }
 .modal td { padding: 6px 8px; text-align: right; }
-.modal td.stage { text-align: left; font-weight: 600; color: #4472C4; }
-.modal tr.tot td { background: #fff2cc; font-weight: bold; border-top: 2px solid #f0d04f; }
+.modal td.stage { text-align: left; font-weight: 600; color: #9db9ff; }
+.modal tr.tot td { background: rgba(255,193,7,.12); font-weight: bold; border-top: 2px solid rgba(255,193,7,.4); }
 .modal .preset-pick { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-.modal .preset-pick label { font-size: 13px; color: #666; }
-.modal .reset-btn { padding: 4px 12px; border: 1px solid #888; background: white; cursor: pointer; border-radius: 4px; font-size: 12px; }
+.modal .preset-pick label { font-size: 13px; color: #9aa3b5; }
+.modal .reset-btn { padding: 5px 14px; border: 1px solid rgba(255,255,255,.2); background: transparent; color: #ddd; cursor: pointer; border-radius: 999px; font-size: 12px; }
 .modal td input.year-edit {
-  width: 70px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; text-align: right;
-  background: #ddeeff; font-size: 12px;
+  width: 70px; padding: 3px; border: 1px solid rgba(255,255,255,.12); border-radius: 3px; text-align: right;
+  background: #1c1c1c; color: #fff; font-size: 12px;
 }
 </style>
 </head>
@@ -164,7 +171,7 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
   <div class="metric" id="finalMetric"><div class="label">100歳時点の全資産</div><div class="value" id="finalAsset">-</div></div>
   <div class="metric" id="bankMetric"><div class="label">初めて破綻する年齢</div><div class="value" id="bankruptAge">-</div></div>
 </div>
-<div id="purchaseInfo" style="background:#fff7d6; padding:10px 16px; border-radius:8px; margin-bottom:16px; font-size:13px; border:1px solid #f0d04f;"></div>
+<div id="purchaseInfo" style="background:rgba(255,193,7,.08); color:#ffd873; padding:10px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; border:1px solid rgba(255,193,7,.35);"></div>
 
 <div class="layout">
 <div class="panel controls">
@@ -185,10 +192,10 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
   <div class="note">※ 上記は額面年収。社保・税金は下部「社保・税金」率で別途控除</div>
 
   <h2>🍱 生活費</h2>
-  <div class="field" style="background:#fff2cc;padding:4px 6px;border-radius:4px;"><label><strong>現在月額合計（自動）</strong></label><span id="livingTotalDisplay" style="color:#385723;font-weight:700;font-size:14px;">-</span> 万円</div>
+  <div class="field" style="background:rgba(255,193,7,.08);padding:4px 6px;border-radius:6px;"><label><strong>現在月額合計（自動）</strong></label><span id="livingTotalDisplay" style="color:#6fcf6f;font-weight:700;font-size:14px;">-</span> 万円</div>
   <details open style="margin-top:6px;">
-    <summary style="cursor:pointer;font-size:12px;color:#444;padding:4px 0;font-weight:600;">📝 生活費10項目の内訳</summary>
-    <div style="background:#f8f9fb;padding:8px;border-radius:6px;margin-top:4px;">
+    <summary style="cursor:pointer;font-size:12px;color:#9db9ff;padding:4px 0;font-weight:600;">📝 生活費10項目の内訳</summary>
+    <div style="background:#1a1a1a;padding:8px;border-radius:8px;margin-top:4px;border:1px solid rgba(255,255,255,.05);">
       <div class="field"><label>食費（万/月）</label><input type="number" id="liv_food" value="8" step="0.5"></div>
       <div class="field"><label>外食（万/月）</label><input type="number" id="liv_eatout" value="3" step="0.5"></div>
       <div class="field"><label>日用品・薬局（万/月）</label><input type="number" id="liv_daily" value="2.5" step="0.5"></div>
@@ -208,7 +215,7 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
   <div class="note">※ 生活費は内訳10項目の合計。お小遣いは別計上（インフレ反映あり、子独立後の減額は非適用）</div>
 
   <h2>🎓 教育費 <button class="view-detail-btn" onclick="showEduDetail()">📚 授業料 年次内訳</button></h2>
-  <div class="field" style="background:#fff2cc;padding:4px 6px;border-radius:4px;"><label><strong>① 授業料</strong>（プリセット）</label>
+  <div class="field" style="background:rgba(255,193,7,.08);padding:4px 6px;border-radius:6px;"><label><strong>① 授業料</strong>（プリセット）</label>
     <select id="eduPreset" style="width:170px;">
       <option value="ri">私立理系（公立小中→私立高→私立大理系）</option>
       <option value="koritsu">公立中心（〜大学まで国公立）</option>
@@ -223,7 +230,7 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
   <div class="note">※ 習い事・医療費は子供存在期間（0歳〜大学卒業年齢）に毎月発生</div>
 
   <div class="tier-group" style="margin-top:8px; background:#eef7ed;">
-    <h3 style="font-size:13px; margin:0 0 8px; color:#385723;">④ 🎒 子供NISA（大学費用に充当）</h3>
+    <h3 style="font-size:13px; margin:0 0 8px; color:#6fcf6f;">④ 🎒 子供NISA（大学費用に充当）</h3>
     <div class="field"><label>月積立額(万円)</label><input type="number" id="nisaMonthly" value="2.5" step="0.5"></div>
     <div class="field"><label>積立期間（子年齢）</label><input type="number" id="nisaEndAge" value="17"></div>
     <div class="field"><label>年利回り(%)</label><input type="number" id="nisaReturn" value="5" step="0.5"></div>
@@ -243,21 +250,21 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
   <div class="field"><label>管理費(万/月)</label><input type="number" id="mgmtFee" value="0" step="0.5"></div>
 
   <div class="tier-group" style="margin-top:8px;">
-    <h3 style="font-size:13px; margin:0 0 8px; color:#444;">📊 金利（5年単位・年利%）</h3>
+    <h3 style="font-size:13px; margin:0 0 8px; color:#9db9ff;">📊 金利（5年単位・年利%）</h3>
     <div id="rateTiers"></div>
     <div class="note" style="margin-top:4px;">※ 段階金利対応。各5年単位で変更すると元利均等返済を再計算</div>
   </div>
 
-  <div class="auto-calc" style="background:#e2efda; padding:10px; border-radius:6px; margin-top:8px; font-size:12px;">
-    <div style="font-weight:600; margin-bottom:6px; color:#385723;">🟢 自動算出値</div>
+  <div class="auto-calc" style="background:rgba(76,175,80,.08); padding:10px; border-radius:10px; margin-top:8px; font-size:12px; border:1px solid rgba(76,175,80,.3);">
+    <div style="font-weight:600; margin-bottom:6px; color:#6fcf6f;">🟢 自動算出値</div>
     <div class="calc-row"><span>借入額：</span><strong id="calcLoan">-</strong> 万円</div>
-    <div class="calc-row"><span><strong>月返済額（初年度・ローンのみ）：</strong></span><strong id="calcMonthlyLoan" style="color:#385723;">-</strong> 万円/月</div>
+    <div class="calc-row"><span><strong>月返済額（初年度・ローンのみ）：</strong></span><strong id="calcMonthlyLoan" style="color:#6fcf6f;">-</strong> 万円/月</div>
     <div class="calc-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #b6d098;"><span>修繕積立金：</span><strong id="calcMaintenance">-</strong> 万円/年</div>
     <div class="calc-row"><span>固定資産税：</span><strong id="calcFixedTax">-</strong> 万円/年</div>
     <div class="calc-row"><span>都市計画税：</span><strong id="calcCityTax">-</strong> 万円/年</div>
-    <div class="calc-row" style="margin-top:6px; padding-top:4px; border-top:1px solid #b6d098;"><span><strong>諸経費（購入時一括）：</strong></span><strong id="calcClosingCost" style="color:#c00;">-</strong> 万円</div>
-    <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11px; color:#666;">諸経費の内訳を見る</summary>
-      <div id="closingDetail" style="font-size:10px; padding:6px; color:#555;"></div>
+    <div class="calc-row" style="margin-top:6px; padding-top:4px; border-top:1px solid rgba(76,175,80,.3);"><span><strong>諸経費（購入時一括）：</strong></span><strong id="calcClosingCost" style="color:#ff7b7b;">-</strong> 万円</div>
+    <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11px; color:#9aa3b5;">諸経費の内訳を見る</summary>
+      <div id="closingDetail" style="font-size:10px; padding:6px; color:#9aa3b5;"></div>
     </details>
   </div>
   <div class="note" style="margin-top:6px;">※ 購入年に「頭金＋諸経費」を一括計上。不足は投資残高から自動取崩。<br>※ 算出根拠：修繕積立金=価格×0.2%/12、固都税=土地1/6×1.4%＋建物×1.4%×1/2、諸経費=仲介手数料(価格×3%+6万)×1.1＋登録免許税＋ローン事務手数料(借入×2.2%)＋火災保険10年＋諸雑費等</div>
@@ -319,12 +326,12 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
     </div>
   </div>
 
-  <div class="chart-container" style="background:#fff7d6; border:2px solid #f0c040;">
-    <h2 style="color:#6b4d00; border-left-color:#f0c040;">💡 借入可能額シミュレーション（手取り年収ベース）</h2>
-    <div id="borrowCapacityInfo" style="font-size:13px; color:#6b4d00; margin-bottom:10px;"></div>
+  <div class="chart-container" style="background:rgba(255,193,7,.06); border:1px solid rgba(255,193,7,.35);">
+    <h2 style="color:#ffd873; border-left-color:#ffd873;">💡 借入可能額シミュレーション（手取り年収ベース）</h2>
+    <div id="borrowCapacityInfo" style="font-size:13px; color:#ffd873; margin-bottom:10px;"></div>
     <table id="borrowCapacityTable" style="width:100%; font-size:13px;">
       <thead>
-        <tr style="background:#5B9BD5; color:white;">
+        <tr style="background:#4f8cff; color:white;">
           <th>返済負担率</th>
           <th>年返済額</th>
           <th>月返済額</th>
@@ -354,7 +361,7 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
     <div class="preset-pick">
       <label>プリセット：<strong id="eduModalPreset"></strong></label>
       <button class="reset-btn" onclick="resetEduOverrides()">プリセットに戻す</button>
-      <span style="font-size:11px;color:#888;">※ 表内の金額セルをクリックして個別年に上書き可能</span>
+      <span style="font-size:11px;color:#9aa3b5;">※ 表内の金額セルをクリックして個別年に上書き可能</span>
     </div>
     <table id="eduDetailTable">
       <thead><tr>
@@ -366,6 +373,10 @@ td.edu-clickable:hover { background: #fff7d6; text-decoration: underline; }
 </div>
 
 <script>
+Chart.defaults.color = '#9aa3b5';
+Chart.defaults.borderColor = 'rgba(255,255,255,.08)';
+Chart.defaults.font.family = "'Inter', -apple-system, 'Hiragino Sans', sans-serif";
+
 // === Education cost presets (万円/年・年齢別) ===
 const eduPresets = {
   // 配列インデックス = 子年齢（0〜25）/ 値 = その年の授業料（万円・年額）
@@ -873,7 +884,7 @@ function render(rows) {
       <span class="value ${ratioClass(ratioNet)}">${(ratioNet*100).toFixed(1)}%</span>
       <span class="sub">（÷ 手取り ${fmt(annualNet)}万・税率${(taxR*100).toFixed(0)}%控除後）</span>
     </span>
-    <div style="flex-basis:100%; font-size:11px; color:#6b4d00; margin-top:4px;">
+    <div style="flex-basis:100%; font-size:11px; color:#ffd873; margin-top:4px;">
       📋 参照内訳：夫${husbandRefAge}歳[${tierLabelOf(husbandRefAge)}]=${fmt(refSalH)}万 ＋ 妻${wifeRefAge}歳[${tierLabelOf(wifeRefAge)}]=${fmt(refSalW)}万
       <span style="margin-left:16px;">※ 25%以下=安全、35%以下=要注意、超は警戒</span>
     </div>
@@ -902,14 +913,15 @@ function render(rows) {
     const closingApprox = propertyPrice * 0.08;
     const upfront = dpVal + closingApprox;
     const cls = target === 0.20 ? 'safe' : (target === 0.25 ? 'warn' : 'danger');
-    const colorMap = {safe:'#2c7a2c', warn:'#ce8000', danger:'#c00'};
-    return `<tr style="background:${target===0.20?'#e8f5e9':target===0.25?'#fff8e1':'#fce4e4'};">
+    const colorMap = {safe:'#6fcf6f', warn:'#ffb84f', danger:'#ff7b7b'};
+    const bgMap = {safe:'rgba(76,175,80,.1)', warn:'rgba(255,193,7,.1)', danger:'rgba(255,80,80,.1)'};
+    return `<tr style="background:${bgMap[cls]};">
       <td style="text-align:center; font-weight:bold; color:${colorMap[cls]}; font-size:15px;">${(target*100).toFixed(0)}%</td>
       <td style="text-align:right;">${fmt(annualPayment)} 万円</td>
       <td style="text-align:right;">${monthlyPayment.toFixed(1)} 万円</td>
-      <td style="text-align:right; font-weight:bold; color:#2c3e50;">${fmt(loan)} 万円</td>
-      <td style="text-align:right; font-weight:bold; color:#4472C4;">${fmt(propertyPrice)} 万円</td>
-      <td style="text-align:right; color:#666;">${fmt(upfront)} 万円</td>
+      <td style="text-align:right; font-weight:bold; color:#fff;">${fmt(loan)} 万円</td>
+      <td style="text-align:right; font-weight:bold; color:#9db9ff;">${fmt(propertyPrice)} 万円</td>
+      <td style="text-align:right; color:#9aa3b5;">${fmt(upfront)} 万円</td>
     </tr>`;
   }).join('');
 
@@ -946,11 +958,11 @@ function render(rows) {
   if (charts.asset) charts.asset.destroy();
   charts.asset = new Chart(document.getElementById('assetChart'), {
     type: 'line', data: { labels, datasets: [
-      { label: '現預金', data: rows.map(r=>Math.round(r.cash)), borderColor:'#4472C4', backgroundColor:'rgba(68,114,196,.1)', tension:.3 },
-      { label: '投資残高', data: rows.map(r=>Math.round(r.invBal)), borderColor:'#ED7D31', backgroundColor:'rgba(237,125,49,.1)', tension:.3 },
-      { label: 'iDeCo残高', data: rows.map(r=>Math.round(r.idecoBal)), borderColor:'#70AD47', backgroundColor:'rgba(112,173,71,.1)', tension:.3 },
-      { label: '子供NISA残高', data: rows.map(r=>Math.round(r.nisaBal)), borderColor:'#9966FF', backgroundColor:'rgba(153,102,255,.1)', tension:.3 },
-      { label: '全資産合計', data: rows.map(r=>Math.round(r.totalAsset)), borderColor:'#C00000', borderWidth:3, backgroundColor:'rgba(192,0,0,.1)', tension:.3 },
+      { label: '現預金', data: rows.map(r=>Math.round(r.cash)), borderColor:'#4f8cff', backgroundColor:'rgba(79,140,255,.12)', tension:.3 },
+      { label: '投資残高', data: rows.map(r=>Math.round(r.invBal)), borderColor:'#ff9f4f', backgroundColor:'rgba(255,159,79,.12)', tension:.3 },
+      { label: 'iDeCo残高', data: rows.map(r=>Math.round(r.idecoBal)), borderColor:'#6fcf6f', backgroundColor:'rgba(111,207,111,.12)', tension:.3 },
+      { label: '子供NISA残高', data: rows.map(r=>Math.round(r.nisaBal)), borderColor:'#b28dff', backgroundColor:'rgba(178,141,255,.12)', tension:.3 },
+      { label: '全資産合計', data: rows.map(r=>Math.round(r.totalAsset)), borderColor:'#ff5c5c', borderWidth:3, backgroundColor:'rgba(255,92,92,.1)', tension:.3 },
     ]}, options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}}, scales:{y:{title:{display:true,text:'万円'}}, x:{title:{display:true,text:'夫年齢'}}}}
   });
 
@@ -971,12 +983,12 @@ function render(rows) {
       labels,
       datasets: [
         { label: '収入合計', data: rows.map(r=>Math.round(r.totalIncome)),
-          backgroundColor: 'rgba(91,155,213,0.75)', borderColor:'#5B9BD5', borderWidth:1, order: 2 },
+          backgroundColor: 'rgba(79,140,255,0.75)', borderColor:'#4f8cff', borderWidth:1, order: 2 },
         { label: '支出合計', data: rows.map(r=>Math.round(r.totalExpense)),
-          backgroundColor: 'rgba(192,0,0,0.75)', borderColor:'#C00000', borderWidth:1, order: 2 },
+          backgroundColor: 'rgba(255,92,92,0.75)', borderColor:'#ff5c5c', borderWidth:1, order: 2 },
         { label: '年末現預金（〜64歳）', data: rows.map(r => r.hAge <= 64 ? Math.round(r.cash) : null),
-          type: 'line', borderColor:'#FFA500', backgroundColor:'rgba(255,165,0,0.2)',
-          borderWidth: 2.5, tension: 0.3, spanGaps: false, pointRadius: 3, pointBackgroundColor: '#FFA500',
+          type: 'line', borderColor:'#ff9f4f', backgroundColor:'rgba(255,159,79,0.2)',
+          borderWidth: 2.5, tension: 0.3, spanGaps: false, pointRadius: 3, pointBackgroundColor: '#ff9f4f',
           fill: false, order: 1 },
       ]
     },
@@ -1030,7 +1042,7 @@ function render(rows) {
   document.getElementById('cfBody').innerHTML = rows.map(r=>{
     const cls = r.bankrupt ? 'bankrupt' : '';
     const housingDisp = r.housingPurchase > 0
-      ? `<span title="月住宅費${fmt(r.housingMonthly)}＋頭金${fmt(r.housingPurchase)}" style="color:#c00;font-weight:bold;">${fmt(r.housing)} 🏠</span>`
+      ? `<span title="月住宅費${fmt(r.housingMonthly)}＋頭金${fmt(r.housingPurchase)}" style="color:#ff7b7b;font-weight:bold;">${fmt(r.housing)} 🏠</span>`
       : fmt(r.housing);
     const householdEduBurden = r.fullEduCost - r.nisaWithdrawal;  // 家計実質負担（授業料）
     const lessonsMed = r.lessonCost + r.medicalCost;
@@ -1061,7 +1073,7 @@ function render(rows) {
       eduDisplay = `${fmt(eduCashImpact)}<span style="${noteStyle}">${sub}</span>`;
     }
     const assetExIdeco = r.totalAsset - r.idecoBal;
-    const exIdecoStyle = assetExIdeco < 0 ? 'color:#c00;font-weight:bold;background:#ffe0e0;' : '';
+    const exIdecoStyle = assetExIdeco < 0 ? 'color:#ff7b7b;font-weight:bold;background:rgba(255,80,80,.15);' : '';
     return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${r.cAge}</td><td>${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduTitle}">${eduDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9966FF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
   }).join('');
 
@@ -1073,7 +1085,7 @@ function render(rows) {
     const afterAsset = purchaseRow.totalAsset;
     const consumed = beforeAsset - afterAsset + purchaseRow.balance; // approximate change due purely to purchase
     document.getElementById('purchaseInfo').innerHTML =
-      `購入年: <strong>${purchaseRow.year}年（夫${purchaseRow.hAge}歳）</strong>　頭金＋諸経費 <strong>${fmt(purchaseRow.housingPurchase)}万円</strong>　購入前資産 ${fmt(beforeAsset)} → 購入後資産 <strong style="color:${afterAsset<beforeAsset/2?'#c00':'#2c3e50'}">${fmt(afterAsset)}</strong> 万円`;
+      `購入年: <strong>${purchaseRow.year}年（夫${purchaseRow.hAge}歳）</strong>　頭金＋諸経費 <strong>${fmt(purchaseRow.housingPurchase)}万円</strong>　購入前資産 ${fmt(beforeAsset)} → 購入後資産 <strong style="color:${afterAsset<beforeAsset/2?'#ff7b7b':'#fff'}">${fmt(afterAsset)}</strong> 万円`;
   } else {
     document.getElementById('purchaseInfo').innerHTML = '';
   }
