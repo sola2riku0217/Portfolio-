@@ -148,6 +148,8 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   background: #fff; color: #444; font-size: 12px;
 }
 
+.mobile-tabs { display: none; }
+
 @media (max-width: 900px) {
   body { padding: 12px; }
   .layout { grid-template-columns: 1fr; }
@@ -157,6 +159,21 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   .custom-section { overflow-x: auto; }
   .custom-item, .custom-header { min-width: 420px; }
   .toolbar a { margin-left: 0 !important; }
+
+  .mobile-tabs {
+    display: flex; gap: 8px; margin-bottom: 14px;
+    position: sticky; top: 0; z-index: 20;
+    background: #F7F6F2; padding: 10px 0 6px;
+  }
+  .mobile-tabs button {
+    flex: 1; padding: 11px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(79,127,103,.5); background: #fff; color: #4F7F67;
+    font-size: 14px; font-weight: 700; font-family: inherit;
+  }
+  .mobile-tabs button.active { background: #4F7F67; color: #fff; border-color: #4F7F67; }
+
+  body.mtab-input .mobile-result-block { display: none; }
+  body.mtab-result .mobile-input-block { display: none; }
 }
 
 @media (max-width: 480px) {
@@ -178,18 +195,23 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <span id="saveStatus" class="save-status"></span>
 </div>
 
-<div id="loanRatioBar" class="loan-ratio-bar"></div>
+<div class="mobile-tabs" id="mobileTabs">
+  <button type="button" class="active" data-mtab="input">📝 入力</button>
+  <button type="button" data-mtab="result">📊 結果</button>
+</div>
 
-<div class="summary">
+<div id="loanRatioBar" class="loan-ratio-bar mobile-result-block"></div>
+
+<div class="summary mobile-result-block">
   <div class="metric"><div class="label">67年間の収入合計</div><div class="value" id="totalIncome">-</div></div>
   <div class="metric"><div class="label">67年間の支出合計</div><div class="value" id="totalExpense">-</div></div>
   <div class="metric" id="finalMetric"><div class="label">100歳時点の全資産</div><div class="value" id="finalAsset">-</div></div>
   <div class="metric" id="bankMetric"><div class="label">初めて破綻する年齢</div><div class="value" id="bankruptAge">-</div></div>
 </div>
-<div id="purchaseInfo" style="background:#FDF3E0; color:#97690F; padding:10px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; border:1px solid #F0DBA8;"></div>
+<div id="purchaseInfo" class="mobile-result-block" style="background:#FDF3E0; color:#97690F; padding:10px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; border:1px solid #F0DBA8;"></div>
 
 <div class="layout">
-<div class="panel controls">
+<div class="panel controls mobile-input-block">
   <h2>👨‍👩‍👧 基本情報</h2>
   <div class="field"><label>夫の現在年齢</label><input type="number" id="husbandAge" value="34"></div>
   <div class="field"><label>妻の現在年齢</label><input type="number" id="wifeAge" value="34"></div>
@@ -322,7 +344,7 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <div class="field"><label>額面に対する率(%)</label><input type="number" id="taxRate" value="25" step="0.5"></div>
 </div>
 
-<div class="panel">
+<div class="panel mobile-result-block">
   <div class="chart-container">
     <h2>💰 資産推移（現預金・投資・iDeCo・全資産）</h2>
     <div class="chart-wrapper"><canvas id="assetChart"></canvas></div>
@@ -1280,6 +1302,37 @@ document.querySelectorAll('input, select').forEach(el => {
   }
 });
 run();
+
+// === Mobile 入力/結果 tab switch ===
+// Only affects layout under the 900px breakpoint (see CSS); on desktop both
+// panels stay visible side-by-side regardless of this state.
+(function setupMobileTabs() {
+  const tabs = document.getElementById('mobileTabs');
+  if (!tabs) return;
+  document.body.classList.add('mtab-input');
+  tabs.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.mtab;
+      document.body.classList.toggle('mtab-input', target === 'input');
+      document.body.classList.toggle('mtab-result', target === 'result');
+      if (target === 'result') {
+        // Charts are (re)created every time an input changes, which only happens
+        // while the 入力 tab is shown - at that point their canvas parent has
+        // display:none and Chart.js sizes them to 0. Force a resize once the
+        // result panel becomes visible again so the charts actually render.
+        requestAnimationFrame(() => {
+          if (charts.asset) charts.asset.resize();
+          if (charts.ie) charts.ie.resize();
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+})();
 </script>
 </body>
 </html>
