@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家計管理アプリ</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  margin: 0; padding: 60px 24px;
+  background: #F7F6F2;
+  color: #444;
+  min-height: 100vh;
+}
+.container { max-width: 1000px; margin: 0 auto; }
+.eyebrow { display: block; font-size: 13px; letter-spacing: .15em; text-transform: uppercase; color: #4F7F67; margin-bottom: 10px; font-weight: 700; }
+h1 { color: #333; font-size: clamp(28px,4vw,40px); font-weight: 700; margin: 0 0 10px; }
+h2 { color: #333; margin: 0 0 18px; font-size: 20px; font-weight: 700; }
+h2.mini { font-size: 14px; font-weight: 700; color: #4F7F67; margin: 0 0 14px; }
+.sub { color: #777; font-size: 15px; margin: 0 0 32px; max-width: 700px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.tab-btn { padding: 10px 20px; border-radius: 999px; border: 1px solid #ddd; background: #fff; color: #666; font-size: 14px; font-weight: 600; cursor: pointer; transition: .2s; }
+.tab-btn.active { background: #4F7F67; border-color: #4F7F67; color: #fff; }
+.tab-btn .badge { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.3); font-size: 11px; }
+.tab-btn.active .badge { background: rgba(255,255,255,.25); }
+.tab-btn:not(.active) .badge { background: #FBE9E7; color: #C0524A; }
+.panel { display: none; position: relative; background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,.06); margin-bottom: 26px; border: 1px solid #eee; }
+.panel.active { display: block; }
+.empty { color: #999; font-size: 13px; padding: 30px 0; text-align: center; }
+
+/* accounts */
+.account-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.account-row:last-child { border-bottom: none; }
+.account-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.account-name { flex: 1; font-weight: 600; color: #333; }
+.account-name input { width: 100%; border: none; background: transparent; font-weight: 600; color: #333; font-size: 15px; font-family: inherit; }
+.account-name input:focus { outline: none; border-bottom: 1px solid #4F7F67; }
+.account-deposit { display: flex; align-items: center; gap: 6px; color: #666; font-size: 13px; }
+.account-deposit input { width: 90px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; text-align: right; background: #F7F6F2; color: #444; font-family: inherit; }
+form.inline { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-top: 18px; padding-top: 18px; border-top: 1px dashed #ddd; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #777; }
+.field input, .field select { padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #F7F6F2; color: #444; font-family: inherit; }
+.btn { padding: 10px 22px; border: none; border-radius: 999px; background: #4F7F67; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: .2s; }
+.btn:hover { background: #416a56; }
+.btn.secondary { background: #C9805E; }
+.btn.secondary:hover { background: #b06c4c; }
+.btn.danger { background: transparent; color: #C0524A; border: 1px solid rgba(192,82,74,.4); padding: 6px 14px; font-size: 12px; }
+.btn.danger:hover { background: #FBE9E7; }
+.btn.ghost { background: transparent; color: #777; border: 1px solid #ddd; }
+.btn.ghost:hover { background: #F7F6F2; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* capture */
+.upload-box { border: 2px dashed #C9805E; border-radius: 16px; padding: 40px 20px; text-align: center; cursor: pointer; background: #FBF3EE; transition: .2s; }
+.upload-box:hover { background: #F5E6DE; }
+.upload-box .icon { font-size: 36px; margin-bottom: 10px; }
+.upload-box .label { color: #C9805E; font-weight: 600; font-size: 14px; }
+.upload-box .note { color: #999; font-size: 12px; margin-top: 6px; }
+#fileInput { display: none; }
+.receipt-list { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.receipt-item { display: flex; gap: 14px; align-items: center; background: #F7F6F2; border-radius: 14px; padding: 12px; border: 1px solid #eee; }
+.receipt-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; flex-shrink: 0; background: #eee; }
+.receipt-item .info { flex: 1; min-width: 0; }
+.receipt-item .store-row { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.receipt-item input.store { font-weight: 600; color: #333; border: none; background: transparent; font-size: 14px; width: 100%; font-family: inherit; }
+.receipt-item input.store:focus { outline: none; border-bottom: 1px solid #4F7F67; }
+.receipt-item .amount-row { display: flex; align-items: center; gap: 4px; color: #C9805E; font-weight: 700; font-size: 14px; }
+.receipt-item input.amount { width: 90px; border: none; background: transparent; color: #C9805E; font-weight: 700; font-size: 14px; text-align: right; font-family: inherit; }
+.receipt-item input.amount:focus { outline: none; border-bottom: 1px solid #C9805E; }
+.receipt-item .status-tag { font-size: 11px; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+.status-processing { background: #FDF3E0; color: #97690F; }
+.status-unsorted { background: #E5F2EA; color: #4F7F67; }
+.status-sorted { background: #eee; color: #999; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #F0DBA8; border-top-color: #97690F; border-radius: 50%; animation: spin .8s linear infinite; margin-right: 4px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* sort tab */
+.sort-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.sort-count { color: #777; font-size: 13px; }
+.card-stage { position: relative; height: 420px; display: flex; align-items: center; justify-content: center; }
+.swipe-card {
+  position: absolute; width: min(320px, 88vw); background: #fff; border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.12); border: 1px solid #eee; padding: 18px;
+  touch-action: none; user-select: none; cursor: grab;
+}
+.swipe-card:active { cursor: grabbing; }
+.swipe-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 14px; background: #eee; margin-bottom: 14px; }
+.swipe-card .store { font-size: 17px; font-weight: 700; color: #333; margin-bottom: 6px; border: none; background: transparent; width: 100%; font-family: inherit; }
+.swipe-card .amount { font-size: 24px; font-weight: 700; color: #C9805E; border: none; background: transparent; width: 100%; font-family: inherit; }
+.swipe-card .meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.swipe-card .meta-label { font-size: 11px; color: #999; }
+.swipe-card .month-field { margin-top: 10px; font-size: 12px; color: #777; display: flex; align-items: center; gap: 6px; }
+.swipe-card .month-field input { border: 1px solid #ddd; border-radius: 6px; padding: 4px 6px; font-size: 12px; background: #F7F6F2; font-family: inherit; }
+.pill-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+.account-pill { padding: 10px 18px; border-radius: 999px; border: 2px solid #ddd; background: #fff; color: #666; font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s; }
+.account-pill.highlight { transform: scale(1.12); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.sort-actions { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+
+/* summary */
+.month-picker { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.month-picker input { padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #F7F6F2; color: #444; font-family: inherit; }
+.summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin-bottom: 26px; }
+.summary-card { padding: 18px; border-radius: 16px; background: #F7F6F2; border: 1px solid #eee; }
+.summary-card .name { font-weight: 700; color: #333; font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.summary-card .row { display: flex; justify-content: space-between; font-size: 13px; color: #777; padding: 3px 0; }
+.summary-card .row strong { color: #333; }
+.summary-card .balance.positive { color: #4F7F67; }
+.summary-card .balance.negative { color: #C0524A; }
+.chart-wrapper { position: relative; height: 300px; margin-top: 10px; }
+.footer-note { text-align: center; color: #999; font-size: 12px; margin-top: 10px; }
+@media (max-width: 600px) { .container { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="eyebrow">Family.AI Tools</span>
+  <h1>💰 家計管理アプリ</h1>
+  <p class="sub">複数口座を管理し、レシートを撮影してOCRで自動読み取り。仕分けタブでスワイプして口座に振り分け、月々の収支を確認できます。データはこのブラウザ内に自動保存されます。</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="accounts">口座設定</button>
+    <button class="tab-btn" data-tab="capture">レシート撮影</button>
+    <button class="tab-btn" data-tab="sort">仕分け<span class="badge" id="unsortedBadge">0</span></button>
+    <button class="tab-btn" data-tab="summary">月次収支</button>
+  </div>
+
+  <div class="panel active" id="tab-accounts">
+    <h2 class="mini">🏦 口座一覧</h2>
+    <div id="accountList"></div>
+    <div class="empty" id="accountEmpty" style="display:none;">まだ口座がありません。下のフォームから追加してください。</div>
+    <form class="inline" id="accountForm">
+      <div class="field">
+        <label for="newAccountName">口座名</label>
+        <input type="text" id="newAccountName" placeholder="例: 生活費口座" required style="width:180px;">
+      </div>
+      <div class="field">
+        <label for="newAccountDeposit">月の入金額(円)</label>
+        <input type="number" id="newAccountDeposit" placeholder="50000" min="0" step="1000" style="width:130px;">
+      </div>
+      <button type="submit" class="btn">＋ 口座を追加</button>
+    </form>
+  </div>
+
+  <div class="panel" id="tab-capture">
+    <h2 class="mini">📷 レシートを撮影・アップロード</h2>
+    <div class="upload-box" id="uploadBox">
+      <div class="icon">🧾</div>
+      <div class="label">タップしてレシートを撮影 / 選択</div>
+      <div class="note">複数枚まとめて選択できます。OCRで店舗名と合計金額を自動検出します。</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" multiple>
+    <div class="receipt-list" id="captureList"></div>
+    <div class="empty" id="captureEmpty">まだレシートがありません。</div>
+  </div>
+
+  <div class="panel" id="tab-sort">
+    <div class="sort-header">
+      <h2 class="mini" style="margin:0;">🔀 レシートを仕分ける</h2>
+      <span class="sort-count" id="sortCount">残り0件</span>
+    </div>
+    <div class="card-stage" id="cardStage">
+      <div class="empty">仕分けるレシートがありません。<br>「レシート撮影」タブから追加してください。</div>
+    </div>
+    <div class="pill-row" id="pillRow"></div>
+    <div class="sort-actions">
+      <button class="btn ghost" id="skipBtn">🗑 このレシートを除外</button>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-summary">
+    <h2 class="mini">📊 月次収支</h2>
+    <div class="month-picker">
+      <label for="summaryMonth" style="font-size:13px;color:#777;">対象月</label>
+      <input type="month" id="summaryMonth">
+    </div>
+    <div class="summary-cards" id="summaryCards"></div>
+    <div class="chart-wrapper"><canvas id="summaryChart"></canvas></div>
+  </div>
+
+  <p class="footer-note">© Household Budget Tracker</p>
+</div>
+
+<script>
+const STORAGE_KEY = 'budgetTrackerData_v1';
+const PALETTE = ['#4F7F67','#C9805E','#C9A227','#6B8FA3','#9B7FBF','#C0524A'];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.accounts) && Array.isArray(parsed.receipts)) return parsed;
+    }
+  } catch (e) {}
+  return { accounts: [], receipts: [], nextAccountId: 1, nextReceiptId: 1 };
+}
+let data = loadData();
+if (data.nextAccountId == null) data.nextAccountId = Math.max(0, ...data.accounts.map(a => a.id)) + 1;
+if (data.nextReceiptId == null) data.nextReceiptId = Math.max(0, ...data.receipts.map(r => r.id)) + 1;
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    alert('保存容量の上限に達した可能性があります。古いレシート画像を削除するか、仕分け済みレシートを整理してください。');
+  }
+}
+
+function fmtYen(n) { return '¥' + Math.round(n || 0).toLocaleString(); }
+function currentMonth() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function accountColor(idx) { return PALETTE[idx % PALETTE.length]; }
+
+/* ================= Tabs ================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'summary') renderSummary();
+    if (btn.dataset.tab === 'sort') renderSortStack();
+  });
+});
+
+/* ================= Accounts ================= */
+function renderAccounts() {
+  const wrap = document.getElementById('accountList');
+  wrap.innerHTML = '';
+  document.getElementById('accountEmpty').style.display = data.accounts.length ? 'none' : 'block';
+  data.accounts.forEach((a, idx) => {
+    const row = document.createElement('div');
+    row.className = 'account-row';
+    row.innerHTML = `
+      <div class="account-dot" style="background:${accountColor(idx)};"></div>
+      <div class="account-name"><input type="text" value="${escapeAttr(a.name)}" data-id="${a.id}" data-field="name"></div>
+      <div class="account-deposit">月入金
+        <input type="number" min="0" step="1000" value="${a.monthlyDeposit || 0}" data-id="${a.id}" data-field="monthlyDeposit">
+        円
+      </div>
+      <button class="btn danger" data-id="${a.id}" data-action="delAccount">削除</button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('input[data-field]').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const id = Number(e.target.dataset.id);
+      const field = e.target.dataset.field;
+      const acc = data.accounts.find(a => a.id === id);
+      if (!acc) return;
+      acc[field] = field === 'monthlyDeposit' ? (Number(e.target.value) || 0) : (e.target.value || '口座');
+      saveData();
+      renderPills();
+    });
+  });
+  wrap.querySelectorAll('[data-action="delAccount"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = Number(e.target.dataset.id);
+      if (!confirm('この口座を削除しますか？（振り分け済みレシートの記録は残ります）')) return;
+      data.accounts = data.accounts.filter(a => a.id !== id);
+      saveData();
+      renderAccounts();
+      renderPills();
+    });
+  });
+}
+
+document.getElementById('accountForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('newAccountName').value.trim();
+  const deposit = Number(document.getElementById('newAccountDeposit').value) || 0;
+  if (!name) return;
+  data.accounts.push({ id: data.nextAccountId++, name, monthlyDeposit: deposit });
+  saveData();
+  document.getElementById('newAccountName').value = '';
+  document.getElementById('newAccountDeposit').value = '';
+  renderAccounts();
+  renderPills();
+});
+
+function escapeAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+function escapeHtml(s) { return String(s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+/* ================= Capture / OCR ================= */
+document.getElementById('uploadBox').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files || []);
+  files.forEach(handleFile);
+  e.target.value = '';
+});
+
+function resizeImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 700;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.65));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function parseOcrText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let store = lines.length ? lines[0].slice(0, 30) : '';
+
+  const totalKeywords = /(合計|お会計|ご請求|総計|小計|計)/;
+  const numRe = /[\d,]{3,}/g;
+  let amount = 0;
+  let bestLineScore = -1;
+  lines.forEach(line => {
+    const nums = line.match(numRe);
+    if (!nums) return;
+    const val = Math.max(...nums.map(n => parseInt(n.replace(/,/g, ''), 10) || 0));
+    if (totalKeywords.test(line)) {
+      if (val > 0) { amount = val; bestLineScore = 2; }
+    } else if (bestLineScore < 1) {
+      if (val > amount) { amount = val; bestLineScore = Math.max(bestLineScore, 0); }
+    }
+  });
+  return { store, amount };
+}
+
+function handleFile(file) {
+  const receipt = {
+    id: data.nextReceiptId++,
+    image: null,
+    ocrText: '',
+    store: '読み取り中...',
+    amount: 0,
+    capturedAt: new Date().toISOString(),
+    status: 'processing',
+    accountId: null,
+    month: currentMonth()
+  };
+  data.receipts.unshift(receipt);
+  saveData();
+  renderCaptureList();
+  updateUnsortedBadge();
+
+  resizeImage(file).then(dataUrl => {
+    receipt.image = dataUrl;
+    saveData();
+    renderCaptureList();
+    if (typeof Tesseract === 'undefined') {
+      receipt.store = '';
+      receipt.status = 'unsorted';
+      saveData();
+      renderCaptureList();
+      updateUnsortedBadge();
+      return;
+    }
+    Tesseract.recognize(dataUrl, 'jpn+eng')
+      .then(({ data: ocrData }) => {
+        const parsed = parseOcrText(ocrData.text || '');
+        receipt.ocrText = ocrData.text || '';
+        receipt.store = parsed.store || '';
+        receipt.amount = parsed.amount || 0;
+        receipt.status = 'unsorted';
+        saveData();
+        renderCaptureList();
+        updateUnsortedBadge();
+      })
+      .catch(() => {
+        receipt.store = '';
+        receipt.status = 'unsorted';
+        saveData();
+        renderCaptureList();
+        updateUnsortedBadge();
+      });
+  });
+}
+
+function renderCaptureList() {
+  const wrap = document.getElementById('captureList');
+  const sorted = [...data.receipts].sort((a, b) => new Date(b.capturedAt) - new Date(a.capturedAt));
+  document.getElementById('captureEmpty').style.display = sorted.length ? 'none' : 'block';
+  wrap.innerHTML = sorted.map(r => {
+    const statusLabel = r.status === 'processing' ? '<span class="spinner"></span>OCR中'
+      : r.status === 'unsorted' ? '未仕分け'
+      : '仕分け済み';
+    const statusClass = 'status-' + r.status;
+    const acc = data.accounts.find(a => a.id === r.accountId);
+    return `
+      <div class="receipt-item">
+        <img src="${r.image || ''}" alt="">
+        <div class="info">
+          <div class="store-row">
+            <input class="store" value="${escapeAttr(r.store)}" data-id="${r.id}" data-field="store" placeholder="店舗名">
+          </div>
+          <div class="amount-row">¥<input class="amount" type="number" value="${r.amount}" data-id="${r.id}" data-field="amount"></div>
+        </div>
+        <span class="status-tag ${statusClass}">${statusLabel}${acc ? ' → ' + escapeHtml(acc.name) : ''}</span>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('input[data-field]').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const id = Number(e.target.dataset.id);
+      const field = e.target.dataset.field;
+      const r = data.receipts.find(x => x.id === id);
+      if (!r) return;
+      r[field] = field === 'amount' ? (Number(e.target.value) || 0) : e.target.value;
+      saveData();
+    });
+  });
+}
+
+function updateUnsortedBadge() {
+  const n = data.receipts.filter(r => r.status === 'unsorted').length;
+  document.getElementById('unsortedBadge').textContent = n;
+  document.getElementById('sortCount').textContent = '残り' + n + '件';
+}
+
+/* ================= Sort (swipe) ================= */
+let dragState = null;
+
+function renderPills() {
+  const row = document.getElementById('pillRow');
+  row.innerHTML = data.accounts.map((a, idx) =>
+    `<button type="button" class="account-pill" data-id="${a.id}" style="border-color:${accountColor(idx)};">${escapeHtml(a.name)}</button>`
+  ).join('');
+  row.querySelectorAll('.account-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const top = getTopUnsorted();
+      if (!top) return;
+      assignReceipt(top.id, Number(pill.dataset.id));
+    });
+  });
+}
+
+function getTopUnsorted() {
+  return data.receipts.filter(r => r.status === 'unsorted').sort((a, b) => new Date(a.capturedAt) - new Date(b.capturedAt))[0];
+}
+
+function assignReceipt(receiptId, accountId) {
+  const r = data.receipts.find(x => x.id === receiptId);
+  if (!r) return;
+  r.status = 'sorted';
+  r.accountId = accountId;
+  saveData();
+  updateUnsortedBadge();
+  renderCaptureList();
+  renderSortStack();
+}
+
+function skipReceipt(receiptId) {
+  const r = data.receipts.find(x => x.id === receiptId);
+  if (!r) return;
+  if (!confirm('このレシートを除外（削除）しますか？')) return;
+  data.receipts = data.receipts.filter(x => x.id !== receiptId);
+  saveData();
+  updateUnsortedBadge();
+  renderCaptureList();
+  renderSortStack();
+}
+
+document.getElementById('skipBtn').addEventListener('click', () => {
+  const top = getTopUnsorted();
+  if (top) skipReceipt(top.id);
+});
+
+function renderSortStack() {
+  const stage = document.getElementById('cardStage');
+  updateUnsortedBadge();
+  const top = getTopUnsorted();
+  if (!top) {
+    stage.innerHTML = '<div class="empty">仕分けるレシートがありません。<br>「レシート撮影」タブから追加してください。</div>';
+    return;
+  }
+  stage.innerHTML = `
+    <div class="swipe-card" id="swipeCard">
+      <img src="${top.image || ''}" alt="">
+      <div class="meta"><span class="meta-label">店舗名</span></div>
+      <input class="store" value="${escapeAttr(top.store)}" placeholder="店舗名を入力">
+      <div class="meta" style="margin-top:8px;"><span class="meta-label">合計金額</span></div>
+      <div style="display:flex;align-items:baseline;">
+        <span class="amount" style="font-size:24px;">¥</span><input class="amount" type="number" value="${top.amount}">
+      </div>
+      <div class="month-field">対象月 <input type="month" value="${top.month}"></div>
+    </div>
+  `;
+  const card = document.getElementById('swipeCard');
+  card.querySelector('input.store').addEventListener('change', (e) => { top.store = e.target.value; saveData(); });
+  card.querySelector('input.amount').addEventListener('change', (e) => { top.amount = Number(e.target.value) || 0; saveData(); });
+  card.querySelector('input[type="month"]').addEventListener('change', (e) => { top.month = e.target.value; saveData(); });
+
+  setupDrag(card, top);
+}
+
+function setupDrag(card, receipt) {
+  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+
+  const onDown = (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    card.setPointerCapture(e.pointerId);
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    dx = e.clientX - startX;
+    dy = e.clientY - startY;
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx / 20}deg)`;
+    highlightNearestPill(dx);
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    const pills = Array.from(document.querySelectorAll('.account-pill'));
+    const nearest = pills.find(p => p.classList.contains('highlight'));
+    if (Math.abs(dx) > 70 && nearest) {
+      const flyX = dx > 0 ? window.innerWidth : -window.innerWidth;
+      card.style.transition = 'transform .4s ease';
+      card.style.transform = `translate(${flyX}px, ${dy}px) rotate(${dx / 10}deg)`;
+      const accountId = Number(nearest.dataset.id);
+      setTimeout(() => assignReceipt(receipt.id, accountId), 350);
+    } else {
+      card.style.transition = 'transform .3s ease';
+      card.style.transform = 'translate(0,0) rotate(0)';
+      clearPillHighlight();
+      setTimeout(() => { if (card) card.style.transition = ''; }, 300);
+    }
+    dx = 0; dy = 0;
+  };
+
+  card.addEventListener('pointerdown', onDown);
+  card.addEventListener('pointermove', onMove);
+  card.addEventListener('pointerup', onUp);
+  card.addEventListener('pointercancel', onUp);
+}
+
+function clearPillHighlight() {
+  document.querySelectorAll('.account-pill').forEach(p => p.classList.remove('highlight'));
+}
+function highlightNearestPill(dx) {
+  const pills = Array.from(document.querySelectorAll('.account-pill'));
+  clearPillHighlight();
+  if (Math.abs(dx) < 40 || !pills.length) return;
+  const cardStage = document.getElementById('cardStage');
+  const stageCenter = cardStage.getBoundingClientRect().left + cardStage.getBoundingClientRect().width / 2;
+  const targetX = stageCenter + dx;
+  let nearest = null, minDist = Infinity;
+  pills.forEach(p => {
+    const rect = p.getBoundingClientRect();
+    const center = rect.left + rect.width / 2;
+    const d = Math.abs(center - targetX);
+    if (d < minDist) { minDist = d; nearest = p; }
+  });
+  if (nearest && minDist < 150) nearest.classList.add('highlight');
+}
+
+/* ================= Summary ================= */
+let summaryChart = null;
+document.getElementById('summaryMonth').addEventListener('change', renderSummary);
+
+function renderSummary() {
+  const monthInput = document.getElementById('summaryMonth');
+  if (!monthInput.value) monthInput.value = currentMonth();
+  const month = monthInput.value;
+
+  const cardsWrap = document.getElementById('summaryCards');
+  if (!data.accounts.length) {
+    cardsWrap.innerHTML = '<div class="empty">口座がまだ登録されていません。「口座設定」タブから追加してください。</div>';
+    if (summaryChart) { summaryChart.destroy(); summaryChart = null; }
+    return;
+  }
+
+  const stats = data.accounts.map((a, idx) => {
+    const spent = data.receipts
+      .filter(r => r.status === 'sorted' && r.accountId === a.id && r.month === month)
+      .reduce((s, r) => s + (r.amount || 0), 0);
+    const balance = (a.monthlyDeposit || 0) - spent;
+    return { account: a, idx, spent, balance };
+  });
+
+  cardsWrap.innerHTML = stats.map(s => `
+    <div class="summary-card">
+      <div class="name"><span class="account-dot" style="width:10px;height:10px;border-radius:50%;background:${accountColor(s.idx)};display:inline-block;"></span>${escapeHtml(s.account.name)}</div>
+      <div class="row"><span>入金額</span><strong>${fmtYen(s.account.monthlyDeposit)}</strong></div>
+      <div class="row"><span>支出合計</span><strong>${fmtYen(s.spent)}</strong></div>
+      <div class="row"><span>残高</span><strong class="balance ${s.balance >= 0 ? 'positive' : 'negative'}">${fmtYen(s.balance)}</strong></div>
+    </div>
+  `).join('');
+
+  if (summaryChart) summaryChart.destroy();
+  Chart.defaults.color = '#777';
+  Chart.defaults.borderColor = 'rgba(0,0,0,.06)';
+  Chart.defaults.font.family = "'Noto Sans JP', -apple-system, sans-serif";
+  summaryChart = new Chart(document.getElementById('summaryChart'), {
+    type: 'bar',
+    data: {
+      labels: stats.map(s => s.account.name),
+      datasets: [
+        { label: '入金額', data: stats.map(s => s.account.monthlyDeposit || 0), backgroundColor: 'rgba(79,127,103,0.75)' },
+        { label: '支出合計', data: stats.map(s => s.spent), backgroundColor: 'rgba(201,128,94,0.75)' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { title: { display: true, text: '円' } } }
+    }
+  });
+}
+
+/* ================= Init ================= */
+renderAccounts();
+renderCaptureList();
+renderPills();
+updateUnsortedBadge();
+document.getElementById('summaryMonth').value = currentMonth();
+</script>
+</body>
+</html>
