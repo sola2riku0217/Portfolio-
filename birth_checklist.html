@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出産手続きナビ | Family.AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { margin:0; font-family:'Noto Sans JP',-apple-system,sans-serif; background:#F7F6F2; color:#444; }
+::selection { background:#4F7F67; color:#fff; }
+a { color:#4F7F67; }
+
+header { position:sticky; top:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:18px 28px; backdrop-filter:blur(20px); background:rgba(247,246,242,.88); border-bottom:1px solid #eee; }
+.brand { font-weight:700; font-size:20px; color:#4F7F67; text-decoration:none; }
+
+.wrap { max-width:1100px; margin:0 auto; padding:30px 20px 80px; }
+h1 { font-size:28px; margin:10px 0 6px; }
+.sub { color:#888; font-size:14px; margin:0 0 26px; line-height:1.7; }
+
+.card { background:#fff; border:1px solid #eee; border-radius:20px; box-shadow:0 8px 24px rgba(0,0,0,.05); padding:24px; margin-bottom:24px; position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; background:linear-gradient(90deg,#4F7F67,transparent); }
+.card h2 { font-size:18px; margin:0 0 16px; display:flex; align-items:center; gap:8px; }
+
+label { font-size:13px; color:#777; font-weight:500; display:block; margin-bottom:6px; }
+input, select { font-family:inherit; font-size:15px; color:#444; padding:10px 14px; border:1px solid #ddd; border-radius:12px; background:#F7F6F2; outline:none; }
+input:focus, select:focus { border-color:#4F7F67; }
+.btn { font-family:inherit; padding:10px 22px; border:none; border-radius:999px; background:#4F7F67; color:#fff; font-size:14px; font-weight:600; cursor:pointer; transition:.25s; }
+.btn:hover { background:#6b9a82; }
+.btn.ghost { background:transparent; color:#4F7F67; border:1px solid rgba(79,127,103,.4); }
+.btn.ghost:hover { background:#E5F2EA; }
+
+.date-row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; }
+.countdown { margin-left:auto; text-align:right; font-size:13px; color:#777; }
+.countdown strong { display:block; font-size:22px; color:#4F7F67; }
+
+.section-label { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:#4F7F67; font-weight:700; margin:26px 0 10px; }
+
+.task { display:flex; gap:12px; align-items:flex-start; padding:14px 6px; border-bottom:1px solid #f0efe9; }
+.task:last-child { border-bottom:none; }
+.task input[type=checkbox] { width:20px; height:20px; accent-color:#4F7F67; margin-top:3px; flex-shrink:0; cursor:pointer; }
+.task.done .t-name { text-decoration:line-through; color:#aaa; }
+.t-name { font-weight:600; font-size:15px; }
+.t-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chip { font-size:12px; padding:3px 10px; border-radius:999px; background:#E5F2EA; color:#4F7F67; border:1px solid rgba(79,127,103,.2); }
+.chip.who { background:#fff; }
+.chip.due { background:#4F7F67; color:#fff; border-color:#4F7F67; }
+.chip.overdue { background:#c0654f; border-color:#c0654f; color:#fff; }
+.t-note { font-size:12.5px; color:#999; margin-top:6px; line-height:1.6; }
+.del { margin-left:auto; background:none; border:none; color:#bbb; cursor:pointer; font-size:16px; flex-shrink:0; padding:2px 6px; }
+.del:hover { color:#c0654f; }
+
+.add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:14px; }
+.add-grid input, .add-grid select { width:100%; }
+
+.cal-head { display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:14px; }
+.cal-head h3 { margin:0; font-size:17px; min-width:130px; text-align:center; }
+.cal-nav { border:1px solid #ddd; background:#fff; border-radius:999px; width:34px; height:34px; cursor:pointer; font-size:15px; color:#4F7F67; }
+.cal-nav:hover { background:#E5F2EA; }
+table.cal { width:100%; border-collapse:collapse; table-layout:fixed; }
+.cal th { font-size:12px; color:#999; font-weight:500; padding:6px 0; }
+.cal td { border:1px solid #f0efe9; vertical-align:top; height:86px; padding:4px; font-size:12px; }
+.cal .d { color:#888; font-size:11px; }
+.cal td.today { background:#EAF3EC; }
+.cal td.today .d { color:#4F7F67; font-weight:700; }
+.cal td.birth { background:rgba(79,127,103,.15); }
+.ev { display:block; margin-top:3px; padding:2px 6px; border-radius:8px; background:#4F7F67; color:#fff; font-size:10.5px; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:default; }
+.ev.pre { background:#8fb3a0; }
+.ev.done { background:#ccc; text-decoration:line-through; }
+.ev.mark { background:transparent; color:#4F7F67; font-weight:700; padding-left:0; }
+
+footer { text-align:center; color:#aaa; font-size:12px; padding:30px; }
+@media (max-width:640px) {
+  .cal td { height:70px; }
+  .ev { font-size:9px; padding:2px 3px; }
+  h1 { font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="index.html">Family.AI</a>
+  <span style="font-size:13px;color:#888;">出産手続きナビ</span>
+</header>
+
+<div class="wrap">
+  <h1>出産前後の手続き・やることリスト</h1>
+  <p class="sub">出産予定日を入力すると、東京都内(23区・市部)で必要な主な手続きの期限を自動計算し、リストとカレンダーに表示します。<br>チェック状態や追加したタスクはこの端末に保存されます。出産後は実際の出生日に日付を更新してください。※期限や窓口は自治体・勤務先により異なる場合があります。必ず各窓口でご確認ください。</p>
+
+  <div class="card">
+    <h2>📅 基準日の設定</h2>
+    <div class="date-row">
+      <div>
+        <label for="dueDate">出産予定日(出生後は実際の出生日)</label>
+        <input type="date" id="dueDate">
+      </div>
+      <div class="countdown" id="countdown"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>✅ やることリスト</h2>
+    <div id="taskList"><p style="color:#999;font-size:14px;">出産予定日を入力すると期限が表示されます。</p></div>
+  </div>
+
+  <div class="card">
+    <h2>➕ タスクを追加</h2>
+    <div class="add-grid">
+      <div style="grid-column:1/-1;"><label>タスク名</label><input type="text" id="addName" placeholder="例:内祝いの手配" maxlength="40"></div>
+      <div><label>期限</label><input type="date" id="addDate"></div>
+      <div><label>時期</label><select id="addPhase"><option value="pre">出産前</option><option value="post" selected>出産後</option></select></div>
+      <div><label>場所・窓口</label><input type="text" id="addPlace" placeholder="例:区役所" maxlength="30"></div>
+      <div><label>実施者</label><select id="addWho"><option>母</option><option>父</option><option>どちらか</option><option>ふたりで</option></select></div>
+    </div>
+    <button class="btn" id="addBtn">追加する</button>
+  </div>
+
+  <div class="card">
+    <h2>🗓 期限カレンダー</h2>
+    <div class="cal-head">
+      <button class="cal-nav" id="prevM">‹</button>
+      <h3 id="calTitle"></h3>
+      <button class="cal-nav" id="nextM">›</button>
+    </div>
+    <table class="cal">
+      <thead><tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr></thead>
+      <tbody id="calBody"></tbody>
+    </table>
+    <p style="font-size:12px;color:#999;margin:12px 0 0;">
+      <span class="chip" style="background:#8fb3a0;color:#fff;border-color:#8fb3a0;">出産前</span>
+      <span class="chip" style="background:#4F7F67;color:#fff;">出産後</span>
+      <span class="chip" style="background:#ccc;color:#fff;border-color:#ccc;">完了済み</span>
+      各日付は「その日までに実施」の期限目安です。
+    </p>
+  </div>
+</div>
+
+<footer>© 2026 Family.AI — 制度情報は2026年時点の一般的な内容です。詳細は各区市町村・勤務先・健康保険組合にご確認ください。</footer>
+
+<script>
+const KEY = 'birthChecklist_v1';
+
+// offset: 基準日(出産予定日/出生日)からの日数。期限=基準日+offset
+const DEFAULT_TASKS = [
+  { id:'d1', phase:'pre',  offset:-42, name:'産前休業の申請', place:'勤務先', who:'母', note:'産前6週間(42日)前から取得可。就業規則に従い早めに申請。' },
+  { id:'d2', phase:'pre',  offset:-30, name:'出産育児一時金・直接支払制度の手続き', place:'出産する産院', who:'母', note:'50万円が産院へ直接支払われる制度。入院前に産院で合意書に記入。' },
+  { id:'d3', phase:'pre',  offset:-30, name:'育児休業の申請(父・母)', place:'勤務先', who:'ふたりで', note:'開始予定日の1か月前までが原則。産後パパ育休は2週間前まで。' },
+  { id:'d4', phase:'pre',  offset:-14, name:'入院準備・提出書類の最終確認', place:'自宅', who:'ふたりで', note:'入院バッグ、母子手帳、保険証、印鑑、必要書類の控えを準備。' },
+  { id:'d5', phase:'post', offset:7,   name:'出生通知票の提出', place:'区市町村の保健センター(郵送・電子申請可)', who:'父', note:'新生児訪問(赤ちゃん訪問)のための連絡票。母子手帳交付時にもらうはがき。' },
+  { id:'d6', phase:'post', offset:13,  name:'出生届の提出', place:'区市役所(住所地・本籍地・出生地いずれか)', who:'父', note:'出生日を含めて14日以内。出生証明書(産院発行)・母子手帳を持参。24時間受付の区も多い。' },
+  { id:'d7', phase:'post', offset:14,  name:'健康保険への加入(子ども)', place:'勤務先(社保)または区市役所(国保)', who:'どちらか', note:'扶養に入れる側の勤務先へ。1か月健診までに保険証(資格確認書)が届くよう早めに。' },
+  { id:'d8', phase:'post', offset:15,  name:'児童手当の申請', place:'住所地の区市役所(電子申請可の区も)', who:'父', note:'出生日の翌日から15日以内。所得が高い方が請求者。遅れると支給月が減る。' },
+  { id:'d9', phase:'post', offset:30,  name:'乳幼児医療費助成(マル乳)の申請', place:'住所地の区市役所', who:'どちらか', note:'子の保険加入後すみやかに。都内は所得制限なしで自己負担分を助成。' },
+  { id:'d10',phase:'post', offset:57,  name:'出産手当金の申請', place:'勤務先経由で健康保険組合', who:'母', note:'産後56日経過後にまとめて申請可(時効2年)。会社員の母が対象。' },
+  { id:'d11',phase:'post', offset:60,  name:'育児休業給付金の申請確認', place:'勤務先経由でハローワーク', who:'ふたりで', note:'原則会社が手続き。育休開始後、申請状況を勤務先に確認。' }
+];
+
+let state = load();
+let calCursor = null; // {y, m}
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && typeof s === 'object') return { dueDate: s.dueDate || '', done: s.done || {}, custom: s.custom || [] };
+  } catch(e) {}
+  return { dueDate:'', done:{}, custom:[] };
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function parseDate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+function fmt(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function fmtFull(d) { return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function today0() { const t = new Date(); t.setHours(0,0,0,0); return t; }
+
+function allTasks() {
+  const base = state.dueDate ? parseDate(state.dueDate) : null;
+  const list = DEFAULT_TASKS.map(t => ({ ...t, due: base ? addDays(base, t.offset) : null, custom:false }));
+  state.custom.forEach(c => list.push({ ...c, due: c.date ? parseDate(c.date) : null, custom:true }));
+  list.sort((a,b) => (a.due?a.due:Infinity) - (b.due?b.due:Infinity));
+  return list;
+}
+
+function dueLabel(t) {
+  if (!t.due) return '期限:予定日を入力';
+  const map = { d1:'産前6週前〜', d10:'産後57日目〜申請可' };
+  const prefix = map[t.id] ? map[t.id]+' ' : '';
+  return prefix + fmtFull(t.due) + (map[t.id] ? '' : ' まで');
+}
+
+function renderTasks() {
+  const wrap = document.getElementById('taskList');
+  const tasks = allTasks();
+  const t0 = today0();
+  const phases = [['pre','出産前'], ['post','出産後']];
+  wrap.innerHTML = phases.map(([ph, label]) => {
+    const rows = tasks.filter(t => t.phase === ph).map(t => {
+      const done = !!state.done[t.id];
+      const overdue = t.due && !done && t.due < t0;
+      return `<div class="task ${done?'done':''}">
+        <input type="checkbox" data-id="${t.id}" ${done?'checked':''}>
+        <div style="flex:1;min-width:0;">
+          <div class="t-name">${esc(t.name)}</div>
+          <div class="t-meta">
+            <span class="chip due ${overdue?'overdue':''}">${overdue?'⚠ 期限超過 ':''}${dueLabel(t)}</span>
+            ${t.place?`<span class="chip">📍 ${esc(t.place)}</span>`:''}
+            <span class="chip who">👤 ${esc(t.who)}</span>
+          </div>
+          ${t.note?`<div class="t-note">${esc(t.note)}</div>`:''}
+        </div>
+        ${t.custom?`<button class="del" data-del="${t.id}" title="削除">✕</button>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="section-label">${label}</div>` + (rows || '<p style="color:#aaa;font-size:13px;">タスクなし</p>');
+  }).join('');
+
+  wrap.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', e => {
+    state.done[e.target.dataset.id] = e.target.checked;
+    if (!e.target.checked) delete state.done[e.target.dataset.id];
+    save(); renderTasks(); renderCal();
+  }));
+  wrap.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', e => {
+    state.custom = state.custom.filter(c => c.id !== e.target.dataset.del);
+    delete state.done[e.target.dataset.del];
+    save(); renderTasks(); renderCal();
+  }));
+}
+
+function renderCountdown() {
+  const el = document.getElementById('countdown');
+  if (!state.dueDate) { el.innerHTML = ''; return; }
+  const diff = Math.round((parseDate(state.dueDate) - today0()) / 86400000);
+  if (diff > 0) el.innerHTML = `予定日まで<strong>あと ${diff} 日</strong>`;
+  else if (diff === 0) el.innerHTML = `<strong>本日が予定日です</strong>`;
+  else el.innerHTML = `誕生から<strong>${-diff} 日目</strong>`;
+}
+
+function renderCal() {
+  const body = document.getElementById('calBody');
+  if (!calCursor) {
+    const base = state.dueDate ? parseDate(state.dueDate) : new Date();
+    calCursor = { y: base.getFullYear(), m: base.getMonth() };
+  }
+  const { y, m } = calCursor;
+  document.getElementById('calTitle').textContent = `${y}年 ${m+1}月`;
+
+  const events = {};
+  allTasks().forEach(t => {
+    if (!t.due) return;
+    const k = `${t.due.getFullYear()}-${t.due.getMonth()}-${t.due.getDate()}`;
+    (events[k] = events[k] || []).push(t);
+  });
+
+  const first = new Date(y, m, 1);
+  const start = addDays(first, -first.getDay());
+  const t0 = today0();
+  const base = state.dueDate ? parseDate(state.dueDate) : null;
+  let html = '';
+  for (let w = 0; w < 6; w++) {
+    html += '<tr>';
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(start, w*7 + i);
+      const inMonth = d.getMonth() === m;
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const isToday = d.getTime() === t0.getTime();
+      const isBirth = base && d.getTime() === base.getTime();
+      const evs = (events[k] || []).map(t =>
+        `<span class="ev ${state.done[t.id]?'done':t.phase==='pre'?'pre':''}" title="${esc(t.name)} / ${esc(t.place||'')} / ${esc(t.who)}">${esc(t.name)}</span>`
+      ).join('');
+      html += `<td class="${isToday?'today':''} ${isBirth?'birth':''}" style="${inMonth?'':'opacity:.35;'}">
+        <span class="d">${d.getDate()}</span>
+        ${isBirth?'<span class="ev mark">👶 予定日</span>':''}${evs}</td>`;
+    }
+    html += '</tr>';
+  }
+  body.innerHTML = html;
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// events
+document.getElementById('dueDate').addEventListener('change', e => {
+  state.dueDate = e.target.value; save();
+  calCursor = null;
+  renderCountdown(); renderTasks(); renderCal();
+});
+document.getElementById('prevM').addEventListener('click', () => { calCursor.m--; if (calCursor.m < 0) { calCursor.m = 11; calCursor.y--; } renderCal(); });
+document.getElementById('nextM').addEventListener('click', () => { calCursor.m++; if (calCursor.m > 11) { calCursor.m = 0; calCursor.y++; } renderCal(); });
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  const name = document.getElementById('addName').value.trim();
+  const date = document.getElementById('addDate').value;
+  if (!name) { alert('タスク名を入力してください'); return; }
+  if (!date) { alert('期限の日付を入力してください'); return; }
+  state.custom.push({
+    id: 'c' + Date.now(),
+    name, date,
+    phase: document.getElementById('addPhase').value,
+    place: document.getElementById('addPlace').value.trim(),
+    who: document.getElementById('addWho').value,
+    note: ''
+  });
+  save();
+  document.getElementById('addName').value = '';
+  document.getElementById('addDate').value = '';
+  document.getElementById('addPlace').value = '';
+  renderTasks(); renderCal();
+});
+
+// init
+if (state.dueDate) document.getElementById('dueDate').value = state.dueDate;
+renderCountdown(); renderTasks(); renderCal();
+</script>
+</body>
+</html>
