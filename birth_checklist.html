@@ -83,7 +83,10 @@ footer { text-align:center; color:#aaa; font-size:12px; padding:30px; }
 
 <header>
   <a class="brand" href="index.html">Family.AI</a>
-  <span style="font-size:13px;color:#888;">出産手続きナビ</span>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span style="font-size:13px;color:#888;">出産手続きナビ</span>
+    <span id="authMount"></span>
+  </div>
 </header>
 
 <div class="wrap">
@@ -314,5 +317,8 @@ document.getElementById('addBtn').addEventListener('click', () => {
 if (state.dueDate) document.getElementById('dueDate').value = state.dueDate;
 renderCountdown(); renderTasks(); renderCal();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>PortfolioAuth.init({ appKey:'birth_checklist', storageKey:'birthChecklist_v1' });</script>
 </body>
 </html>

@@ -60,6 +60,7 @@ a:hover { color:#6b9a82; }
     <a href="#career" style="color:#555;text-decoration:none;">Career</a>
     <a href="#work" style="color:#555;text-decoration:none;">Work</a>
     <a href="#contact" style="color:#555;text-decoration:none;">Contact</a>
+    <span id="authMount" style="display:flex;align-items:center;"></span>
   </div>
 </nav>
 
@@ -359,5 +360,8 @@ document.getElementById('exploreBtn').addEventListener('click', () => {
 })();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>PortfolioAuth.init({ appKey:'index' });</script>
 </body>
 </html>

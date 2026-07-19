@@ -746,5 +746,8 @@ renderPills();
 updateUnsortedBadge();
 document.getElementById('summaryMonth').value = currentMonth();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>PortfolioAuth.init({ appKey:'budget_tracker', storageKey:'budgetTrackerData_v1' });</script>
 </body>
 </html>
