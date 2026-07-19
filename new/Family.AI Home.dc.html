@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我が家のマネージャー｜くらしの無料ツール集</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&amp;family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet">
 <style>
 html { scroll-behavior: smooth; }
 body { margin:0; padding:0; font-family:'Noto Sans JP',-apple-system,sans-serif; background:#FBF6EE; color:#4A4238; overflow-x:hidden; }
@@ -17,11 +21,6 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
 .fade-section { opacity:0; transform:translateY(36px); transition:opacity .9s ease, transform .9s ease; }
 .fade-section.visible { opacity:1; transform:none; }
 @keyframes floaty { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-14px); } }
-.btn-cta { transition:.25s; }
-.btn-cta:hover { background:#BE653C !important; color:#fff !important; }
-#exploreBtn:hover { transform:translateY(-2px); }
-.btn-ghost { transition:.25s; }
-.btn-ghost:hover { border-color:#D0794F !important; }
 @media (max-width: 780px) {
   .fw-nav { padding:14px 18px !important; }
   .fw-navlinks { gap:14px !important; }
@@ -32,8 +31,7 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
   .fw-grid { grid-template-columns:1fr !important; gap:20px !important; }
 }
 </style>
-</head>
-<body>
+</helmet>
 
 <nav class="fw-nav" style="position:fixed;top:0;width:100%;padding:18px 44px;display:flex;justify-content:space-between;align-items:center;backdrop-filter:blur(18px);background:rgba(251,246,238,.88);border-bottom:1px solid #F0E4D3;z-index:1000;box-sizing:border-box;">
   <a href="#top" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
@@ -66,8 +64,8 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
     <h1 style="font-size:clamp(36px,5.6vw,64px);font-weight:900;line-height:1.35;margin:28px 0 0;color:#5B4632;">家族の毎日を、<br>ちょっとラクに。</h1>
     <p style="font-size:clamp(16px,2vw,20px);line-height:2;margin:24px 0 0;color:#8A785F;">子育て・家計・家事のこまごまを手助けする、<br>だれでも無料で使えるWebツールを公開しています。</p>
     <div style="display:flex;gap:14px;margin-top:42px;flex-wrap:wrap;justify-content:center;">
-      <button id="exploreBtn" class="btn-cta" style="padding:17px 40px;border:none;border-radius:999px;font-size:17px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;background:#D0794F;color:#fff;cursor:pointer;box-shadow:0 8px 20px rgba(208,121,79,.32);">ツールを見てみる</button>
-      <a href="#contact" class="btn-ghost" style="padding:17px 34px;border-radius:999px;font-size:17px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;background:#fff;color:#B06A3E;text-decoration:none;border:1.5px solid #EFD9BE;">ツールをリクエスト</a>
+      <button id="exploreBtn" onClick="{{ scrollToTools }}" style="padding:17px 40px;border:none;border-radius:999px;font-size:17px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;background:#D0794F;color:#fff;cursor:pointer;box-shadow:0 8px 20px rgba(208,121,79,.32);transition:.25s;" style-hover="background:#BE653C;transform:translateY(-2px);">ツールを見てみる</button>
+      <a href="#contact" style="padding:17px 34px;border-radius:999px;font-size:17px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;background:#fff;color:#B06A3E;text-decoration:none;border:1.5px solid #EFD9BE;transition:.25s;" style-hover="border-color:#D0794F;">ツールをリクエスト</a>
     </div>
   </div>
 </section>
@@ -106,7 +104,7 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">資産グラフ</span>
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">教育費</span>
       </div>
-      <a href="lifeplan_sim.html" target="_blank" rel="noopener" class="btn-cta" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;">使ってみる ↗</a>
+      <a href="lifeplan_sim.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;" style-hover="background:#BE653C;color:#fff;">使ってみる ↗</a>
       <div style="display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:20px;border-top:1.5px dashed #F0E4D3;">
         <button type="button" class="like-btn" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EFC9B4;background:transparent;color:#C06B43;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>👍</span><span>いいね</span><span class="like-count">0</span></button>
         <button type="button" class="comment-toggle" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EBDFCC;background:transparent;color:#8A785F;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>💬</span><span>コメント</span><span class="comment-count">0</span></button>
@@ -132,7 +130,7 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">ポイント制</span>
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">グラフ</span>
       </div>
-      <a href="housework_tracker.html" target="_blank" rel="noopener" class="btn-cta" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;">使ってみる ↗</a>
+      <a href="housework_tracker.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;" style-hover="background:#BE653C;color:#fff;">使ってみる ↗</a>
       <div style="display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:20px;border-top:1.5px dashed #F0E4D3;">
         <button type="button" class="like-btn" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EFC9B4;background:transparent;color:#C06B43;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>👍</span><span>いいね</span><span class="like-count">0</span></button>
         <button type="button" class="comment-toggle" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EBDFCC;background:transparent;color:#8A785F;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>💬</span><span>コメント</span><span class="comment-count">0</span></button>
@@ -157,7 +155,7 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">複数口座</span>
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">収支グラフ</span>
       </div>
-      <a href="budget_tracker.html" target="_blank" rel="noopener" class="btn-cta" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;">使ってみる ↗</a>
+      <a href="budget_tracker.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;" style-hover="background:#BE653C;color:#fff;">使ってみる ↗</a>
       <div style="display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:20px;border-top:1.5px dashed #F0E4D3;">
         <button type="button" class="like-btn" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EFC9B4;background:transparent;color:#C06B43;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>👍</span><span>いいね</span><span class="like-count">0</span></button>
         <button type="button" class="comment-toggle" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EBDFCC;background:transparent;color:#8A785F;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>💬</span><span>コメント</span><span class="comment-count">0</span></button>
@@ -185,7 +183,7 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">期限を自動計算</span>
         <span style="padding:5px 14px;background:#FBF6EE;border-radius:999px;font-size:12.5px;color:#A5754A;border:1px solid #F0E4D3;">カレンダー</span>
       </div>
-      <a href="birth_checklist.html" target="_blank" rel="noopener" class="btn-cta" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;">使ってみる ↗</a>
+      <a href="birth_checklist.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-size:15px;font-family:'Zen Maru Gothic',sans-serif;" style-hover="background:#BE653C;color:#fff;">使ってみる ↗</a>
       <div style="display:flex;align-items:center;gap:12px;margin-top:22px;padding-top:20px;border-top:1.5px dashed #F0E4D3;">
         <button type="button" class="like-btn" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EFC9B4;background:transparent;color:#C06B43;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>👍</span><span>いいね</span><span class="like-count">0</span></button>
         <button type="button" class="comment-toggle" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #EBDFCC;background:transparent;color:#8A785F;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;"><span>💬</span><span>コメント</span><span class="comment-count">0</span></button>
@@ -209,158 +207,178 @@ h1,h2,h3 { font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif; }
     <span style="display:block;font-size:13px;letter-spacing:.18em;color:#B06A3E;margin-bottom:12px;font-weight:700;position:relative;">REQUEST</span>
     <h2 class="fw-h2" style="font-size:38px;font-weight:900;margin:0 0 20px;color:#5B4632;position:relative;">「こんなツールが欲しい」<br>お聞かせください。</h2>
     <p style="color:#8A6E4E;line-height:2;margin:0 auto;max-width:620px;position:relative;">作って欲しいアプリのある方、仕事の依頼などはこちらからご連絡ください。趣味なので納期指定や品質担保が必要な場合は相談ください。</p>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdY44du6wA-HUFnDGx84-VO7m9eYRRI6msinV6KmXZrN67K7A/viewform?usp=publish-editor" target="_blank" rel="noopener" class="btn-cta" style="display:inline-block;margin-top:34px;padding:17px 44px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;font-size:17px;box-shadow:0 8px 20px rgba(208,121,79,.3);position:relative;">リクエストを送る</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdY44du6wA-HUFnDGx84-VO7m9eYRRI6msinV6KmXZrN67K7A/viewform?usp=publish-editor" target="_blank" rel="noopener" style="display:inline-block;margin-top:34px;padding:17px 44px;border-radius:999px;background:#D0794F;text-decoration:none;color:#fff;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;font-size:17px;box-shadow:0 8px 20px rgba(208,121,79,.3);position:relative;" style-hover="background:#BE653C;color:#fff;">リクエストを送る</a>
   </div>
 </section>
 
 <footer style="padding:60px 20px;text-align:center;color:#B5A288;font-size:14px;">© 2026 我が家のマネージャー — 家族の毎日を、ちょっとラクに。</footer>
-
-<script>
-// --- Scroll fade-in ---
-(function setupFadeIn() {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.fade-section').forEach(el => observer.observe(el));
-})();
-
-// --- Explore button ---
-document.getElementById('exploreBtn').addEventListener('click', () => {
-  const el = document.getElementById('work');
-  if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
-});
-
-// --- Like / comment interactions (Supabase, with localStorage fallback) ---
-(function setupCardInteractions() {
-  const SUPABASE_URL = 'https://inndpuhwcdqazlhoborx.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_uXhfMDnwHB9Mm-fnWovHSw_LAVwqVFv';
-  const SUPABASE_READY = SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1 && SUPABASE_ANON_KEY.indexOf('YOUR-ANON-PUBLIC-KEY') === -1;
-
-  const getClientId = () => {
-    let cid = localStorage.getItem('portfolioClientId');
-    if (!cid) {
-      cid = 'c-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('portfolioClientId', cid);
-    }
-    return cid;
-  };
-  const clientId = getClientId();
-
-  const sbFetch = async (path, options = {}) => {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
-      headers: Object.assign({
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation'
-      }, options.headers || {})
-    }));
-    if (!res.ok) throw new Error('supabase error ' + res.status);
-    return res.status === 204 ? null : res.json();
-  };
-
-  const STORAGE_KEY = 'portfolioCardInteractions';
-  const loadLocalStore = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; } };
-  const saveLocalStore = (store) => localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  const localStore = loadLocalStore();
-  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-  document.querySelectorAll('.project-card').forEach(async (card) => {
-    const key = card.dataset.project || 'untitled';
-    const likeBtn = card.querySelector('.like-btn');
-    const likeCountEl = card.querySelector('.like-count');
-    const commentToggle = card.querySelector('.comment-toggle');
-    const commentCountEl = card.querySelector('.comment-count');
-    const commentSection = card.querySelector('.comment-section');
-    const commentList = card.querySelector('.comment-list');
-    const commentForm = card.querySelector('.comment-form');
-    const commentInput = card.querySelector('.comment-input');
-
-    const setLikeUI = (count, liked) => {
-      if (likeCountEl) likeCountEl.textContent = count;
-      if (likeBtn) {
-        likeBtn.style.background = liked ? '#D0794F' : 'transparent';
-        likeBtn.style.color = liked ? '#fff' : '#C06B43';
-        likeBtn.style.borderColor = liked ? '#D0794F' : '#EFC9B4';
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;fadeIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;},&quot;openComments&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;演出&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      scrollToTools: () => {
+        const el = document.getElementById('work');
+        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
       }
     };
-    const renderCommentList = (comments) => {
-      if (commentCountEl) commentCountEl.textContent = comments.length;
-      if (commentList) {
-        commentList.innerHTML = comments.length
-          ? comments.map(c => "<div style='background:#FBF6EE;border-radius:14px;padding:8px 12px;font-size:13px;color:#4A4238;line-height:1.7;'>" + esc(c.text) + "</div>").join('')
-          : "<div style='font-size:12px;color:#B5A288;'>まだコメントはありません</div>";
-      }
-    };
+  }
 
-    if (SUPABASE_READY) {
-      let likeRows = [];
-      try { likeRows = await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&select=client_id'); } catch (e) { likeRows = []; }
-      let liked = likeRows.some(r => r.client_id === clientId);
-      setLikeUI(likeRows.length, liked);
-
-      let comments = [];
-      try { comments = await sbFetch('card_comments?project_key=eq.' + encodeURIComponent(key) + '&select=text,created_at&order=created_at.asc'); } catch (e) { comments = []; }
-      renderCommentList(comments);
-
-      if (likeBtn) likeBtn.addEventListener('click', async () => {
-        try {
-          if (liked) {
-            await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&client_id=eq.' + encodeURIComponent(clientId), { method: 'DELETE' });
-            likeRows = likeRows.filter(r => r.client_id !== clientId);
-          } else {
-            await sbFetch('card_likes', { method: 'POST', body: JSON.stringify({ project_key: key, client_id: clientId }) });
-            likeRows.push({ client_id: clientId });
-          }
-          liked = !liked;
-          setLikeUI(likeRows.length, liked);
-        } catch (e) {}
-      });
-
-      if (commentForm) commentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = (commentInput.value || '').trim();
-        if (!text) return;
-        try {
-          await sbFetch('card_comments', { method: 'POST', body: JSON.stringify({ project_key: key, text }) });
-          comments.push({ text, created_at: new Date().toISOString() });
-          renderCommentList(comments);
-          commentInput.value = '';
-        } catch (e) {}
-      });
+  componentDidMount() {
+    // fade-in on scroll
+    if (this.props.fadeIn ?? true) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.fade-section').forEach(el => observer.observe(el));
     } else {
-      if (!localStore[key]) localStore[key] = { liked: false, likes: 0, comments: [] };
-      const entry = localStore[key];
-      setLikeUI(entry.likes, entry.liked);
-      renderCommentList(entry.comments);
-
-      if (likeBtn) likeBtn.addEventListener('click', () => {
-        entry.liked = !entry.liked;
-        entry.likes += entry.liked ? 1 : -1;
-        saveLocalStore(localStore);
-        setLikeUI(entry.likes, entry.liked);
-      });
-
-      if (commentForm) commentForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = (commentInput.value || '').trim();
-        if (!text) return;
-        entry.comments.push({ text, created_at: new Date().toISOString() });
-        saveLocalStore(localStore);
-        commentInput.value = '';
-        renderCommentList(entry.comments);
-      });
+      document.querySelectorAll('.fade-section').forEach(el => el.classList.add('visible'));
     }
 
-    if (commentToggle) commentToggle.addEventListener('click', () => {
-      if (commentSection) commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
-    });
-  });
-})();
-</script>
+    // auth widget (same as original page)
+    const sb = document.createElement('script');
+    sb.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    sb.onload = () => {
+      const au = document.createElement('script');
+      au.src = 'auth.js';
+      au.onload = () => { try { window.PortfolioAuth && PortfolioAuth.init({ appKey: 'index' }); } catch (e) {} };
+      document.body.appendChild(au);
+    };
+    document.body.appendChild(sb);
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth.js"></script>
-<script>PortfolioAuth.init({ appKey:'index' });</script>
+    this.setupCardInteractions();
+  }
+
+  setupCardInteractions() {
+    const SUPABASE_URL = 'https://inndpuhwcdqazlhoborx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_uXhfMDnwHB9Mm-fnWovHSw_LAVwqVFv';
+    const SUPABASE_READY = SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1 && SUPABASE_ANON_KEY.indexOf('YOUR-ANON-PUBLIC-KEY') === -1;
+
+    const getClientId = () => {
+      let cid = localStorage.getItem('portfolioClientId');
+      if (!cid) {
+        cid = 'c-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('portfolioClientId', cid);
+      }
+      return cid;
+    };
+    const clientId = getClientId();
+
+    const sbFetch = async (path, options = {}) => {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
+        headers: Object.assign({
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation'
+        }, options.headers || {})
+      }));
+      if (!res.ok) throw new Error('supabase error ' + res.status);
+      return res.status === 204 ? null : res.json();
+    };
+
+    const STORAGE_KEY = 'portfolioCardInteractions';
+    const loadLocalStore = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; } };
+    const saveLocalStore = (store) => localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const localStore = loadLocalStore();
+    const openByDefault = this.props.openComments ?? false;
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    document.querySelectorAll('.project-card').forEach(async (card) => {
+      const key = card.dataset.project || 'untitled';
+      const likeBtn = card.querySelector('.like-btn');
+      const likeCountEl = card.querySelector('.like-count');
+      const commentToggle = card.querySelector('.comment-toggle');
+      const commentCountEl = card.querySelector('.comment-count');
+      const commentSection = card.querySelector('.comment-section');
+      const commentList = card.querySelector('.comment-list');
+      const commentForm = card.querySelector('.comment-form');
+      const commentInput = card.querySelector('.comment-input');
+
+      if (openByDefault && commentSection) commentSection.style.display = 'block';
+
+      const setLikeUI = (count, liked) => {
+        if (likeCountEl) likeCountEl.textContent = count;
+        if (likeBtn) {
+          likeBtn.style.background = liked ? '#D0794F' : 'transparent';
+          likeBtn.style.color = liked ? '#fff' : '#C06B43';
+          likeBtn.style.borderColor = liked ? '#D0794F' : '#EFC9B4';
+        }
+      };
+      const renderCommentList = (comments) => {
+        if (commentCountEl) commentCountEl.textContent = comments.length;
+        if (commentList) {
+          commentList.innerHTML = comments.length
+            ? comments.map(c => "<div style='background:#FBF6EE;border-radius:14px;padding:8px 12px;font-size:13px;color:#4A4238;line-height:1.7;'>" + esc(c.text) + "</div>").join('')
+            : "<div style='font-size:12px;color:#B5A288;'>まだコメントはありません</div>";
+        }
+      };
+
+      if (SUPABASE_READY) {
+        let likeRows = [];
+        try { likeRows = await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&select=client_id'); } catch (e) { likeRows = []; }
+        let liked = likeRows.some(r => r.client_id === clientId);
+        setLikeUI(likeRows.length, liked);
+
+        let comments = [];
+        try { comments = await sbFetch('card_comments?project_key=eq.' + encodeURIComponent(key) + '&select=text,created_at&order=created_at.asc'); } catch (e) { comments = []; }
+        renderCommentList(comments);
+
+        if (likeBtn) likeBtn.addEventListener('click', async () => {
+          try {
+            if (liked) {
+              await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&client_id=eq.' + encodeURIComponent(clientId), { method: 'DELETE' });
+              likeRows = likeRows.filter(r => r.client_id !== clientId);
+            } else {
+              await sbFetch('card_likes', { method: 'POST', body: JSON.stringify({ project_key: key, client_id: clientId }) });
+              likeRows.push({ client_id: clientId });
+            }
+            liked = !liked;
+            setLikeUI(likeRows.length, liked);
+          } catch (e) {}
+        });
+
+        if (commentForm) commentForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const text = (commentInput.value || '').trim();
+          if (!text) return;
+          try {
+            await sbFetch('card_comments', { method: 'POST', body: JSON.stringify({ project_key: key, text }) });
+            comments.push({ text, created_at: new Date().toISOString() });
+            renderCommentList(comments);
+            commentInput.value = '';
+          } catch (e) {}
+        });
+      } else {
+        if (!localStore[key]) localStore[key] = { liked: false, likes: 0, comments: [] };
+        const entry = localStore[key];
+        setLikeUI(entry.likes, entry.liked);
+        renderCommentList(entry.comments);
+
+        if (likeBtn) likeBtn.addEventListener('click', () => {
+          entry.liked = !entry.liked;
+          entry.likes += entry.liked ? 1 : -1;
+          saveLocalStore(localStore);
+          setLikeUI(entry.likes, entry.liked);
+        });
+
+        if (commentForm) commentForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const text = (commentInput.value || '').trim();
+          if (!text) return;
+          entry.comments.push({ text, created_at: new Date().toISOString() });
+          saveLocalStore(localStore);
+          commentInput.value = '';
+          renderCommentList(entry.comments);
+        });
+      }
+
+      if (commentToggle) commentToggle.addEventListener('click', () => {
+        if (commentSection) commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+  }
+}
+</script>
 </body>
 </html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family.AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:0; font-family:'Noto Sans JP',-apple-system,sans-serif; background:#F7F6F2; color:#444; overflow-x:hidden; }
+::selection { background:#4F7F67; color:white; }
+a { color:#4F7F67; }
+a:hover { color:#6b9a82; }
+.fade-section { opacity:0; transform:translateY(50px); transition:1s; }
+.fade-section.visible { opacity:1; transform:none; }
+
+.nav-wrap { position:fixed; top:0; width:100%; padding:25px 50px; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(20px); background:rgba(247,246,242,.85); border-bottom:1px solid #eee; z-index:1000; box-sizing:border-box; }
+.nav-links { display:flex; gap:30px; }
+.hero-section { min-height:100vh; padding:120px 40px; display:flex; align-items:center; justify-content:center; text-align:center; position:relative; background:radial-gradient(circle at top,#EAF3EC 0%,#F7F6F2 55%,#F7F6F2 100%); overflow:hidden; box-sizing:border-box; }
+.content-section { max-width:1200px; margin:auto; padding:120px 40px; box-sizing:border-box; }
+.section-h2 { font-size:46px; margin:0 0 50px; }
+.about-copy { font-size:22px; line-height:2; color:#666; max-width:900px; }
+.projects-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:30px; }
+.project-card-inner { padding:40px; }
+
+@media (hover: none) {
+  #cursorDot, #cursorRing { display:none; }
+}
+
+@media (max-width: 780px) {
+  .nav-wrap { padding:18px 20px; }
+  .nav-links { gap:14px; }
+  .nav-links a { font-size:13px; }
+  .hero-section { padding:100px 20px 80px; }
+  .content-section { padding:70px 20px; }
+  .section-h2 { font-size:32px; margin-bottom:30px; }
+  .about-copy { font-size:17px; line-height:1.9; }
+  .projects-grid { grid-template-columns:1fr; gap:20px; }
+  .project-card-inner { padding:26px; }
+  footer { padding:50px 20px !important; }
+}
+
+@media (max-width: 420px) {
+  .nav-links { gap:10px; }
+  .nav-links a { font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="cursorDot" style="position:fixed;top:0;left:0;width:6px;height:6px;background:#4F7F67;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);z-index:9999;"></div>
+<div id="cursorRing" style="position:fixed;top:0;left:0;width:36px;height:36px;border:1px solid #4F7F67;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);z-index:9999;transition:width .2s,height .2s,background .2s,border-color .2s;"></div>
+
+<nav class="nav-wrap">
+  <div style="font-weight:700;font-size:22px;color:#4F7F67;">Family.AI</div>
+  <div class="nav-links">
+    <a href="#about" style="color:#555;text-decoration:none;">About</a>
+    <a href="#career" style="color:#555;text-decoration:none;">Career</a>
+    <a href="#work" style="color:#555;text-decoration:none;">Work</a>
+    <a href="#contact" style="color:#555;text-decoration:none;">Contact</a>
+    <span id="authMount" style="display:flex;align-items:center;"></span>
+  </div>
+</nav>
+
+<section class="hero-section">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 70%, rgba(79,127,103,.12) 0%, transparent 50%);pointer-events:none;"></div>
+  <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <div style="position:relative;width:min(380px,58vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;top:6%;left:50%;transform:translateX(-50%);font-size:clamp(16px,2vw,22px);font-weight:600;color:#4F7F67;letter-spacing:.02em;">Business</div>
+      <div style="position:absolute;bottom:8%;left:2%;font-size:clamp(16px,2vw,22px);font-weight:600;color:#4F7F67;letter-spacing:.02em;">Technology</div>
+      <div style="position:absolute;bottom:8%;right:2%;font-size:clamp(16px,2vw,22px);font-weight:600;color:#4F7F67;letter-spacing:.02em;">Creativity</div>
+      <svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
+        <polygon points="50,16 12,84 88,84" fill="none" stroke="rgba(79,127,103,.35)" stroke-width="0.6"></polygon>
+      </svg>
+      <h1 style="position:relative;top:8%;font-size:clamp(40px,6vw,72px);font-weight:700;line-height:1;margin:0;background:linear-gradient(180deg,#333333,#4F7F67);-webkit-background-clip:text;background-clip:text;color:transparent;">Family</h1>
+    </div>
+    <p style="font-size:22px;margin-top:20px;color:#666;">人と技術をつなぎ、新しい価値を生み出す。</p>
+    <button id="exploreBtn" style="margin-top:50px;padding:18px 38px;border:none;border-radius:999px;font-size:18px;background:#4F7F67;color:white;transition:.3s;cursor:pointer;">Explore</button>
+  </div>
+</section>
+
+<section id="about" class="fade-section content-section">
+  <span style="display:block;font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:#4F7F67;margin-bottom:14px;font-weight:700;">About</span>
+  <h2 class="section-h2">About</h2>
+  <p class="about-copy">
+    研究開発、新規事業開発、AI、IoT、UXデザイン。
+    スポーツ領域、育児領域、家電領域での経験を通じて培った「人を見る力」を大切にしながら、
+    ビジネス・テクノロジー・クリエイティブを横断した価値創出を目指しています。
+  </p>
+</section>
+
+<section id="career" class="fade-section content-section">
+  <span style="display:block;font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:#4F7F67;margin-bottom:14px;font-weight:700;">Career</span>
+  <h2 class="section-h2">Career</h2>
+  <div style="border-left:2px solid #ddd;padding-left:40px;">
+    <div style="margin-bottom:60px;position:relative;">
+      <div style="position:absolute;left:-49px;top:10px;width:16px;height:16px;background:#4F7F67;border-radius:50%;box-shadow:0 0 0 4px rgba(79,127,103,.15);"></div>
+      <h3 style="margin-bottom:10px;font-size:24px;">🏢 スポーツ用品メーカー</h3>
+      <p style="line-height:1.8;color:#666;">新しいスポーツの開発、IoTデバイスの開発などIT×スポーツの領域を担当。</p>
+    </div>
+    <div style="margin-bottom:60px;position:relative;">
+      <div style="position:absolute;left:-49px;top:10px;width:16px;height:16px;background:#4F7F67;border-radius:50%;box-shadow:0 0 0 4px rgba(79,127,103,.15);"></div>
+      <h3 style="margin-bottom:10px;font-size:24px;">🏢 ベビー用品メーカー</h3>
+      <p style="line-height:1.8;color:#666;">アプリ開発、新規事業開発を担当。</p>
+    </div>
+    <div style="margin-bottom:60px;position:relative;">
+      <div style="position:absolute;left:-49px;top:10px;width:16px;height:16px;background:#4F7F67;border-radius:50%;box-shadow:0 0 0 4px rgba(79,127,103,.15);"></div>
+      <h3 style="margin-bottom:10px;font-size:24px;">🏢 電機メーカー</h3>
+      <p style="line-height:1.8;color:#666;">空調やセンシング技術の研究開発。新規事業の企画・PoC・システム開発まで一貫して担当。</p>
+    </div>
+  </div>
+</section>
+
+<section id="skills" class="fade-section content-section">
+  <span style="display:block;font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:#4F7F67;margin-bottom:14px;font-weight:700;">Skills</span>
+  <h2 class="section-h2">Skills</h2>
+  <div id="skillsList" style="display:flex;flex-wrap:wrap;gap:15px;"></div>
+</section>
+
+<section id="work" class="fade-section content-section">
+  <span style="display:block;font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:#4F7F67;margin-bottom:14px;font-weight:700;">Work</span>
+  <h2 class="section-h2" style="margin-bottom:20px;">Work</h2>
+  <p style="font-size:18px;line-height:1.8;color:#666;max-width:800px;margin:0 0 50px;">開発したWebアプリを公開しています。各カードからデプロイ済みのアプリを開けます。</p>
+  <div id="projectsList" class="projects-grid"></div>
+</section>
+
+<section id="contact" class="fade-section content-section" style="text-align:center;">
+  <span style="display:block;font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:#4F7F67;margin-bottom:14px;font-weight:700;">Contact</span>
+  <h2 class="section-h2">Let's Build Something Together.</h2>
+  <p style="color:#666;">作って欲しいアプリのある方、仕事の依頼などはこちらからご連絡ください。趣味なので手が足りなくなるまでは無料で対応させていただきます。</p>
+  <a href="https://docs.google.com/forms/d/e/1FAIpQLSdY44du6wA-HUFnDGx84-VO7m9eYRRI6msinV6KmXZrN67K7A/viewform?usp=publish-editor" target="_blank" rel="noopener" style="display:inline-block;margin-top:30px;padding:18px 40px;border-radius:999px;background:#4F7F67;text-decoration:none;color:white;font-weight:600;">Contact</a>
+</section>
+
+<footer style="padding:80px;text-align:center;color:#999;">© 2026 Family.AI</footer>
+
+<script>
+const skills = ['AI','Python','IoT','Research','Business Design','UX','Product Design','Project Management','Data Analysis','BLE','UWB','HTML/CSS'];
+
+const projects = [
+  { title: 'ライフプランシミュレーター', description: '収入・支出・資産運用をもとに将来の資産推移を試算するシミュレーションツール。教育費や税制、運用リターンなど詳細な条件設定に対応。', tags: ['JavaScript','Chart.js','Simulation'], url: 'lifeplan_sim.html' },
+  { title: '夫婦の家事分担トラッカー', description: '家事にポイントを設定し、日々の分担を記録・可視化するツール。担当者ごとの集計やカテゴリ別・週別の推移をグラフで確認できる。', tags: ['JavaScript','Chart.js','LocalStorage'], url: 'housework_tracker.html' },
+  { title: '家計管理アプリ', description: '複数口座を管理し、レシート撮影でOCRが店舗名・合計金額を自動検出。仕分けタブでスワイプして口座に振り分け、月々の収支を口座ごとに確認できる。', tags: ['JavaScript','OCR','Chart.js'], url: 'budget_tracker.html' },
+  { title: '出産手続きナビ', description: '出産予定日を入力すると、都内で必要な出産前後の手続き期限を自動計算し、リストとカレンダーで表示。窓口・実施者・期限をひと目で確認でき、独自タスクの追加にも対応。', tags: ['JavaScript','Calendar','LocalStorage'], url: 'birth_checklist.html' }
+];
+
+function renderSkills() {
+  const wrap = document.getElementById('skillsList');
+  wrap.innerHTML = skills.map(skill =>
+    `<div style="padding:12px 22px;background:#E5F2EA;color:#4F7F67;font-weight:500;border-radius:999px;border:1px solid rgba(79,127,103,.2);">${skill}</div>`
+  ).join('');
+}
+
+function renderProjects() {
+  const wrap = document.getElementById('projectsList');
+  wrap.innerHTML = projects.map(project => `
+    <div class='project-card project-card-inner' data-project='${project.title}' style="background:#fff;border-radius:25px;border:1px solid #eee;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.06);">
+      <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#4F7F67,transparent);"></div>
+      <h3 style="margin-bottom:14px;font-size:24px;">${project.title}</h3>
+      <p style="line-height:1.8;color:#666;margin-bottom:24px;">${project.description}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;">
+        ${project.tags.map(tag => `<span style="padding:6px 14px;background:#E5F2EA;border-radius:999px;font-size:13px;color:#4F7F67;border:1px solid rgba(79,127,103,.25);">${tag}</span>`).join('')}
+      </div>
+      <a href="${project.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:999px;background:#4F7F67;text-decoration:none;color:white;font-weight:600;">
+        Webアプリを開く ↗
+      </a>
+      <div class='card-actions' style='display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #eee;'>
+        <button type='button' class='like-btn' style='display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid rgba(79,127,103,.4);background:transparent;color:#4F7F67;font-size:13px;font-weight:600;cursor:pointer;'>
+          <span>👍</span><span>いいね</span><span class='like-count'>0</span>
+        </button>
+        <button type='button' class='comment-toggle' style='display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid #ddd;background:transparent;color:#777;font-size:13px;font-weight:600;cursor:pointer;'>
+          <span>💬</span><span>コメント</span><span class='comment-count'>0</span>
+        </button>
+      </div>
+      <div class='comment-section' style='display:none;margin-top:16px;'>
+        <div class='comment-list' style='display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:160px;overflow-y:auto;'></div>
+        <form class='comment-form' style='display:flex;gap:8px;'>
+          <input type='text' class='comment-input' placeholder='コメントを書く…' maxlength='200' style='flex:1;padding:8px 12px;border-radius:999px;border:1px solid #ddd;background:#F7F6F2;color:#444;font-size:13px;'>
+          <button type='submit' style='padding:8px 18px;border-radius:999px;border:none;background:#4F7F67;color:#fff;font-size:13px;font-weight:600;cursor:pointer;'>送信</button>
+        </form>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderSkills();
+renderProjects();
+
+// --- Custom cursor dot/ring effect ---
+(function setupCursor() {
+  const dot = document.getElementById('cursorDot');
+  const ring = document.getElementById('cursorRing');
+  let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (dot) { dot.style.left = mouseX + 'px'; dot.style.top = mouseY + 'px'; }
+  });
+
+  function animateRing() {
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    if (ring) { ring.style.left = ringX + 'px'; ring.style.top = ringY + 'px'; }
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  const onEnter = () => ring && (ring.style.width = '64px', ring.style.height = '64px', ring.style.background = 'rgba(79,127,103,.12)');
+  const onLeave = () => ring && (ring.style.width = '36px', ring.style.height = '36px', ring.style.background = 'transparent');
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mouseleave', onLeave);
+  });
+})();
+
+// --- Scroll fade-in ---
+(function setupFadeIn() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.fade-section').forEach(el => observer.observe(el));
+})();
+
+// --- Explore button ---
+document.getElementById('exploreBtn').addEventListener('click', () => {
+  const el = document.getElementById('about');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+});
+
+// --- Like / comment interactions (Supabase, with localStorage fallback) ---
+(function setupCardInteractions() {
+  const SUPABASE_URL = 'https://inndpuhwcdqazlhoborx.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_uXhfMDnwHB9Mm-fnWovHSw_LAVwqVFv';
+  const SUPABASE_READY = SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1 && SUPABASE_ANON_KEY.indexOf('YOUR-ANON-PUBLIC-KEY') === -1;
+
+  const getClientId = () => {
+    let cid = localStorage.getItem('portfolioClientId');
+    if (!cid) {
+      cid = 'c-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('portfolioClientId', cid);
+    }
+    return cid;
+  };
+  const clientId = getClientId();
+
+  const sbFetch = async (path, options = {}) => {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
+      headers: Object.assign({
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation'
+      }, options.headers || {})
+    }));
+    if (!res.ok) throw new Error('supabase error ' + res.status);
+    return res.status === 204 ? null : res.json();
+  };
+
+  const STORAGE_KEY = 'portfolioCardInteractions';
+  const loadLocalStore = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; } };
+  const saveLocalStore = (store) => localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  const localStore = loadLocalStore();
+
+  document.querySelectorAll('.project-card').forEach(async (card) => {
+    const key = card.dataset.project || 'untitled';
+
+    const likeBtn = card.querySelector('.like-btn');
+    const likeCountEl = card.querySelector('.like-count');
+    const commentToggle = card.querySelector('.comment-toggle');
+    const commentCountEl = card.querySelector('.comment-count');
+    const commentSection = card.querySelector('.comment-section');
+    const commentList = card.querySelector('.comment-list');
+    const commentForm = card.querySelector('.comment-form');
+    const commentInput = card.querySelector('.comment-input');
+
+    const setLikeUI = (count, liked) => {
+      if (likeCountEl) likeCountEl.textContent = count;
+      if (likeBtn) {
+        likeBtn.style.background = liked ? '#4F7F67' : 'transparent';
+        likeBtn.style.color = liked ? '#fff' : '#4F7F67';
+        likeBtn.style.borderColor = liked ? '#4F7F67' : 'rgba(79,127,103,.4)';
+      }
+    };
+    const renderCommentList = (comments) => {
+      if (commentCountEl) commentCountEl.textContent = comments.length;
+      if (commentList) {
+        commentList.innerHTML = comments.length
+          ? comments.map(c => `<div style='background:#F7F6F2;border-radius:12px;padding:8px 12px;font-size:13px;color:#444;'>${c.text}</div>`).join('')
+          : `<div style='font-size:12px;color:#999;'>まだコメントはありません</div>`;
+      }
+    };
+
+    if (SUPABASE_READY) {
+      let likeRows = [];
+      try { likeRows = await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&select=client_id'); } catch (e) { likeRows = []; }
+      let liked = likeRows.some(r => r.client_id === clientId);
+      setLikeUI(likeRows.length, liked);
+
+      let comments = [];
+      try { comments = await sbFetch('card_comments?project_key=eq.' + encodeURIComponent(key) + '&select=text,created_at&order=created_at.asc'); } catch (e) { comments = []; }
+      renderCommentList(comments);
+
+      if (likeBtn) likeBtn.addEventListener('click', async () => {
+        try {
+          if (liked) {
+            await sbFetch('card_likes?project_key=eq.' + encodeURIComponent(key) + '&client_id=eq.' + encodeURIComponent(clientId), { method: 'DELETE' });
+            likeRows = likeRows.filter(r => r.client_id !== clientId);
+          } else {
+            await sbFetch('card_likes', { method: 'POST', body: JSON.stringify({ project_key: key, client_id: clientId }) });
+            likeRows.push({ client_id: clientId });
+          }
+          liked = !liked;
+          setLikeUI(likeRows.length, liked);
+        } catch (e) {}
+      });
+
+      if (commentForm) commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = (commentInput.value || '').trim();
+        if (!text) return;
+        try {
+          await sbFetch('card_comments', { method: 'POST', body: JSON.stringify({ project_key: key, text }) });
+          comments.push({ text, created_at: new Date().toISOString() });
+          renderCommentList(comments);
+          commentInput.value = '';
+        } catch (e) {}
+      });
+    } else {
+      if (!localStore[key]) localStore[key] = { liked: false, likes: 0, comments: [] };
+      const entry = localStore[key];
+      setLikeUI(entry.likes, entry.liked);
+      renderCommentList(entry.comments);
+
+      if (likeBtn) likeBtn.addEventListener('click', () => {
+        entry.liked = !entry.liked;
+        entry.likes += entry.liked ? 1 : -1;
+        saveLocalStore(localStore);
+        setLikeUI(entry.likes, entry.liked);
+      });
+
+      if (commentForm) commentForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = (commentInput.value || '').trim();
+        if (!text) return;
+        entry.comments.push({ text, created_at: new Date().toISOString() });
+        saveLocalStore(localStore);
+        commentInput.value = '';
+        renderCommentList(entry.comments);
+      });
+    }
+
+    if (commentToggle) commentToggle.addEventListener('click', () => {
+      if (commentSection) commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script>PortfolioAuth.init({ appKey:'index' });</script>
+</body>
+</html>

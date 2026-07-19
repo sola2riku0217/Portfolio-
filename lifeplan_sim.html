@@ -185,14 +185,13 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
 </head>
 <body>
 <div class="container">
-<h1>🌟 ライフプランシミュレーター（34歳〜100歳）</h1>
+<h1>🌟 ライフプランシミュレーター（現在〜100歳）</h1>
 
 <div class="toolbar">
-  <button class="btn-save" onclick="saveAll()">💾 現在の値を保存</button>
-  <button class="btn-load" onclick="loadFromSaved()">📂 保存値を読込</button>
   <button class="btn-reset" onclick="resetAll()">🔄 デフォルトに戻す</button>
-  <a href="収支按分ツール.html" style="margin-left:auto;padding:8px 14px;border-radius:999px;background:#C9805E;color:white;text-decoration:none;font-size:13px;font-weight:600;">💸 収支按分ツールへ →</a>
   <span id="saveStatus" class="save-status"></span>
+  <a href="収支按分ツール.html" style="margin-left:auto;padding:8px 14px;border-radius:999px;background:#C9805E;color:white;text-decoration:none;font-size:13px;font-weight:600;">💸 収支按分ツールへ →</a>
+  <div style="flex-basis:100%;font-size:11px;color:#999;margin-top:2px;">💾 入力値は自動保存されます　💸 収支按分ツール：ここで入力した生活費・住宅費・教育費を引き継ぎ、夫婦それぞれの手取りに応じて負担額を按分してサンキー図で可視化できます</div>
 </div>
 
 <div class="mobile-tabs" id="mobileTabs">
@@ -203,8 +202,8 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
 <div id="loanRatioBar" class="loan-ratio-bar mobile-result-block"></div>
 
 <div class="summary mobile-result-block">
-  <div class="metric"><div class="label">67年間の収入合計</div><div class="value" id="totalIncome">-</div></div>
-  <div class="metric"><div class="label">67年間の支出合計</div><div class="value" id="totalExpense">-</div></div>
+  <div class="metric"><div class="label">生涯収入合計（100歳まで）</div><div class="value" id="totalIncome">-</div></div>
+  <div class="metric"><div class="label">生涯支出合計（100歳まで）</div><div class="value" id="totalExpense">-</div></div>
   <div class="metric" id="finalMetric"><div class="label">100歳時点の全資産</div><div class="value" id="finalAsset">-</div></div>
   <div class="metric" id="bankMetric"><div class="label">初めて破綻する年齢</div><div class="value" id="bankruptAge">-</div></div>
 </div>
@@ -215,18 +214,26 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <h2>👨‍👩‍👧 基本情報</h2>
   <div class="field"><label>夫の現在年齢</label><input type="number" id="husbandAge" value="34"></div>
   <div class="field"><label>妻の現在年齢</label><input type="number" id="wifeAge" value="34"></div>
-  <div class="field"><label>第1子の生年（西暦）</label><input type="number" id="childBirthYear" value="2027"></div>
   <div class="field"><label>現預金残高（万円）</label><input type="number" id="initialCash" value="0"></div>
   <div class="field"><label>開始年（西暦）</label><input type="number" id="startYear" value="2026"></div>
 
-  <h2>💼 給与カーブ（万円・額面年収）</h2>
+  <div class="tier-group" style="margin-top:8px;">
+    <h3 style="font-size:13px; margin:0 0 8px; color:#4F7F67;">👶 子供（デフォルトは夫婦のみ）</h3>
+    <div id="childrenList"></div>
+    <button class="add-btn" onclick="addChild()">＋ 子供を追加</button>
+    <div class="note">※ 追加した子供1人ごとに教育費・習い事・医療費・児童手当・子供NISAを自動計算します</div>
+  </div>
+
+  <h2>💼 給与シミュレーション（万円・額面年収）</h2>
+  <div class="field"><label>夫の現在年収（額面）</label><input type="number" id="currentSalaryH" value="950" step="10"></div>
+  <div class="field"><label>妻の現在年収（額面）</label><input type="number" id="currentSalaryW" value="600" step="10"></div>
   <div class="preset-buttons">
-    <button onclick="applySalaryPreset(event, 'current')" class="active">PDF初期値</button>
-    <button onclick="applySalaryPreset(event, 'conservative')">保守的</button>
+    <button onclick="applySalaryPreset(event, 'conservative')" class="active">保守的</button>
     <button onclick="applySalaryPreset(event, 'optimistic')">楽観的</button>
   </div>
+  <div class="tier-row" style="font-weight:600;color:#999;"><span>年齢帯</span><span style="display:block;width:80px;text-align:center;">夫</span><span style="display:block;width:80px;text-align:center;">妻</span></div>
   <div id="salaryTiers"></div>
-  <div class="note">※ 上記は額面年収。社保・税金は下部「社保・税金」率で別途控除</div>
+  <div class="note">※ 現在の年収とシナリオから、現在の年齢〜65歳の年収カーブを自動生成します（各欄は手動修正も可能）<br>※ 上記は額面年収。社保・税金は下部「社保・税金」率で別途控除。66歳以降の給与は0</div>
 
   <h2>🍱 生活費</h2>
   <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>現在月額合計（自動）</strong></label><span id="livingTotalDisplay" style="color:#4F7F67;font-weight:700;font-size:14px;">-</span> 万円</div>
@@ -245,8 +252,10 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <div class="field"><label>その他（万/月）</label><input type="number" id="liv_other" value="9" step="0.5"></div>
     </div>
   </details>
-  <div class="field" style="margin-top:8px;"><label>年間上昇率(%)</label><input type="number" id="livingGrowth" value="1.5" step="0.1"></div>
+  <div class="field" style="margin-top:8px;"><label>年間物価上昇率(%)</label><input type="number" id="livingGrowth" value="1.5" step="0.1"></div>
+  <div class="note">※ 物価上昇（インフレ）の想定率。生活費とお小遣いが毎年この率で増加します（参考：日銀の物価目標は2%、近年の長期平均は1〜1.5%程度）</div>
   <div class="field"><label>子独立後係数</label><input type="number" id="postChildRatio" value="0.8" step="0.05"></div>
+  <div class="note">※ 末子が大学を卒業（独立）した後の生活費の倍率。0.8なら独立後は生活費が2割減る想定（食費・水道光熱費など子供分の減少を反映）。子供がいない場合は適用されません</div>
   <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;"><label>夫のお小遣い（万/月）</label><input type="number" id="husbandAllowance" value="3" step="0.5"></div>
   <div class="field"><label>妻のお小遣い（万/月）</label><input type="number" id="wifeAllowance" value="3" step="0.5"></div>
   <div class="note">※ 生活費は内訳10項目の合計。お小遣いは別計上（インフレ反映あり、子独立後の減額は非適用）</div>
@@ -262,17 +271,9 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
     </select>
   </div>
   <div class="field"><label>大学卒業年齢</label><input type="number" id="eduEndAge" value="22"></div>
-  <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;"><label><strong>② 習い事</strong>（万/月）</label><input type="number" id="childLessons" value="1.5" step="0.5"></div>
-  <div class="field"><label><strong>③ 医療費</strong>（万/月）</label><input type="number" id="childMedical" value="0.5" step="0.1"></div>
-  <div class="note">※ 習い事・医療費は子供存在期間（0歳〜大学卒業年齢）に毎月発生</div>
-
-  <div class="tier-group" style="margin-top:8px; background:#eef7ed;">
-    <h3 style="font-size:13px; margin:0 0 8px; color:#4F7F67;">④ 🎒 子供NISA（大学費用に充当）</h3>
-    <div class="field"><label>月積立額(万円)</label><input type="number" id="nisaMonthly" value="2.5" step="0.5"></div>
-    <div class="field"><label>積立期間（子年齢）</label><input type="number" id="nisaEndAge" value="17"></div>
-    <div class="field"><label>年利回り(%)</label><input type="number" id="nisaReturn" value="5" step="0.5"></div>
-    <div class="note">※ 0歳から積立、大学（18歳）以降に授業料へ自動取崩。教育費の「①授業料」と連動</div>
-  </div>
+  <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;"><label><strong>② 習い事</strong>（万/月・1人あたり）</label><input type="number" id="childLessons" value="1.5" step="0.5"></div>
+  <div class="field"><label><strong>③ 医療費</strong>（万/月・1人あたり）</label><input type="number" id="childMedical" value="0.5" step="0.1"></div>
+  <div class="note">※ 授業料・習い事・医療費は子供1人あたりの金額。子供の人数分が自動で合算されます（0歳〜大学卒業年齢）</div>
 
   <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;"><label>児童手当〜中（018サポート込・万/月）</label><input type="number" id="childAllow1" value="1.5" step="0.5"></div>
   <div class="field"><label>児童手当 高（018サポート込・万/月）</label><input type="number" id="childAllow2" value="1.0" step="0.5"></div>
@@ -315,6 +316,12 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <div class="field"><label>積立終了年齢</label><input type="number" id="invEndAge" value="65"></div>
   <div class="field"><label>年利回り(%)</label><input type="number" id="invReturn" value="5" step="0.5"></div>
 
+  <h2>🎒 子供NISA（大学費用に充当）</h2>
+  <div class="field"><label>月積立額(万円・1人あたり)</label><input type="number" id="nisaMonthly" value="2.5" step="0.5"></div>
+  <div class="field"><label>積立期間（子年齢）</label><input type="number" id="nisaEndAge" value="17"></div>
+  <div class="field"><label>年利回り(%)</label><input type="number" id="nisaReturn" value="5" step="0.5"></div>
+  <div class="note">※ 子供1人ごとに0歳から積立し、大学（18歳）以降に授業料へ自動取崩。教育費の「①授業料」と連動。子供がいない場合は計算されません</div>
+
   <h2>💰 iDeCo</h2>
   <div class="field"><label>現在残高(万円)</label><input type="number" id="idecoInitial" value="300"></div>
   <div class="field"><label>月拠出(万円)</label><input type="number" id="idecoMonthly" value="1.5" step="0.1"></div>
@@ -342,6 +349,7 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
 
   <h2>💸 社保・税金</h2>
   <div class="field"><label>額面に対する率(%)</label><input type="number" id="taxRate" value="25" step="0.5"></div>
+  <div class="note">※ 額面年収から社会保険料＋所得税・住民税として差し引かれる割合。手取り＝額面×(1−この率)。目安：年収400〜500万円で約20〜22%、600〜800万円で約23〜26%、1,000万円で約27〜30%、1,500万円で約32%前後（扶養・控除により変動）</div>
 </div>
 
 <div class="panel mobile-result-block">
@@ -396,6 +404,7 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <button class="modal-close" onclick="closeEduModal()">✕</button>
     </div>
     <div class="preset-pick">
+      <label>子供：<select id="eduModalChild" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;background:#F7F6F2;color:#444;font-size:13px;" onchange="showEduDetail(parseInt(this.value))"></select></label>
       <label>プリセット：<strong id="eduModalPreset"></strong></label>
       <button class="reset-btn" onclick="resetEduOverrides()">プリセットに戻す</button>
       <span style="font-size:11px;color:#999;">※ 表内の金額セルをクリックして個別年に上書き可能</span>
@@ -433,23 +442,72 @@ const eduStageLabels = ['(乳幼児)','(乳幼児)','(乳幼児)','幼稚園 年
 // User overrides for education (by child age)
 let eduOverrides = {};
 
-// === Salary tier presets ===
-const salaryPresets = {
-  current: {
-    h: [950, 1088, 1200, 1200, 1200, 1200, 971],
-    w: [600, 636, 649, 668, 660, 636, 543],
-  },
-  conservative: {
-    h: [700, 750, 800, 800, 800, 800, 600],
-    w: [400, 420, 440, 450, 450, 440, 350],
-  },
-  optimistic: {
-    h: [1200, 1400, 1700, 1900, 2000, 2000, 1500],
-    w: [700, 800, 900, 1000, 1000, 950, 700],
-  },
+// === Salary simulation (current salary × scenario curve) ===
+// 各年齢帯の年収倍率カーブ（現在年齢の帯を基準に正規化して適用）
+const salaryShapes = {
+  conservative: [1.00, 1.07, 1.14, 1.14, 1.14, 1.14, 0.86],
+  optimistic:   [1.00, 1.17, 1.42, 1.58, 1.67, 1.67, 1.25],
 };
-const tierLabels = ['30〜34歳', '35〜39歳', '40〜44歳', '45〜49歳', '50〜54歳', '55〜60歳', '61〜65歳'];
-let salaryTiers = JSON.parse(JSON.stringify(salaryPresets.current));
+const tierLabels = ['〜34歳', '35〜39歳', '40〜44歳', '45〜49歳', '50〜54歳', '55〜60歳', '61〜65歳'];
+let salaryScenario = 'conservative';
+let salaryTiers = { h: [0,0,0,0,0,0,0], w: [0,0,0,0,0,0,0] };
+
+function tierIndexOf(age) {
+  if (age <= 34) return 0;
+  if (age <= 39) return 1;
+  if (age <= 44) return 2;
+  if (age <= 49) return 3;
+  if (age <= 54) return 4;
+  if (age <= 60) return 5;
+  return 6;
+}
+// 現在年収とシナリオから65歳までの年収カーブを生成
+function generateSalaryTiers() {
+  const shape = salaryShapes[salaryScenario];
+  const baseH = tierIndexOf(val('husbandAge'));
+  const baseW = tierIndexOf(val('wifeAge'));
+  const curH = val('currentSalaryH');
+  const curW = val('currentSalaryW');
+  salaryTiers = {
+    h: shape.map(s => Math.round(curH * s / shape[baseH])),
+    w: shape.map(s => Math.round(curW * s / shape[baseW])),
+  };
+}
+
+// === Children ===
+let children = [];  // [{ birthYear: 2027 }, ...] デフォルトは夫婦のみ
+
+function renderChildren() {
+  const wrap = document.getElementById('childrenList');
+  wrap.innerHTML = children.length ? '' : '<div class="note" style="margin-bottom:4px;">現在：夫婦のみ（子供なし）</div>';
+  children.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'field';
+    row.innerHTML = `
+      <label>第${i + 1}子の生年（西暦）</label>
+      <input type="number" value="${c.birthYear}" data-i="${i}" style="width:80px;">
+      <button type="button" title="削除" style="margin-left:6px;width:22px;height:22px;border:1px solid rgba(192,82,74,.5);background:transparent;color:#C0524A;border-radius:3px;cursor:pointer;font-size:12px;padding:0;" onclick="removeChildRow(${i})">×</button>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      children[parseInt(e.target.dataset.i)].birthYear = parseFloat(e.target.value) || 0;
+      run();
+    });
+  });
+}
+function addChild() {
+  const startYear = val('startYear') || new Date().getFullYear();
+  const yr = children.length ? children[children.length - 1].birthYear + 2 : startYear + 1;
+  children.push({ birthYear: yr });
+  renderChildren();
+  run();
+}
+function removeChildRow(i) {
+  children.splice(i, 1);
+  renderChildren();
+  run();
+}
 
 // === Custom expenses ===
 let customExpenses = [
@@ -579,7 +637,16 @@ function computeClosingCost(housePrice, loanAmount) {
 function renderSalaryTiers() {
   const wrap = document.getElementById('salaryTiers');
   wrap.innerHTML = '';
+  // 現在年齢より前の年齢帯は表示しない（現在からスタート）
+  const minAge = Math.min(val('husbandAge'), val('wifeAge'));
+  const startIdx = Math.min(tierIndexOf(val('husbandAge')), tierIndexOf(val('wifeAge')));
+  const tierEnds = [34, 39, 44, 49, 54, 60, 65];
   tierLabels.forEach((label, i) => {
+    if (i < startIdx) return;
+    // 最初の年齢帯は入力された現在年齢から表示（例：32歳なら「32〜34歳」）
+    if (i === startIdx) {
+      label = minAge >= tierEnds[i] ? `${minAge}歳` : `${minAge}〜${tierEnds[i]}歳`;
+    }
     const row = document.createElement('div');
     row.className = 'tier-row';
     row.innerHTML = `
@@ -599,7 +666,8 @@ function renderSalaryTiers() {
   });
 }
 function applySalaryPreset(ev, name) {
-  salaryTiers = JSON.parse(JSON.stringify(salaryPresets[name]));
+  salaryScenario = name;
+  generateSalaryTiers();
   document.querySelectorAll('.preset-buttons button').forEach(b => b.classList.remove('active'));
   ev.target.classList.add('active');
   renderSalaryTiers();
@@ -695,7 +763,6 @@ function simulate() {
   const startYear = val('startYear');
   const hAgeStart = val('husbandAge');
   const wAgeStart = val('wifeAge');
-  const childBirthYear = val('childBirthYear');
   const initCash = val('initialCash');
   // 生活費は10項目の合計
   const livingIds = ['liv_food','liv_eatout','liv_daily','liv_util','liv_internet','liv_transport','liv_subsc','liv_enter','liv_cloth','liv_other'];
@@ -743,18 +810,18 @@ function simulate() {
   const nisaEndAge = val('nisaEndAge');
   const nisaReturn = val('nisaReturn') / 100;
 
-  const years = 67;  // 34歳〜100歳（i=0..66）
+  const years = Math.max(1, 100 - hAgeStart + 1);  // 現在年齢〜100歳
   const rows = [];
   let cash = initCash;
   let invBal = invInitial;
   let idecoBal = idecoInitial;
-  let nisaBal = 0;  // 子供NISA: 子供誕生時に0スタート
+  let nisaBals = children.map(() => 0);  // 子供NISA: 子供ごとに0スタート
 
   for (let i = 0; i < years; i++) {
     const year = startYear + i;
     const hAge = hAgeStart + i;
     const wAge = wAgeStart + i;
-    const cAge = year - childBirthYear;
+    const cAges = children.map(c => year - c.birthYear);
 
     const hGross = hAge <= 65 ? getSalary(hAge, salaryTiers.h) : 0;
     const wGross = wAge <= 65 ? getSalary(wAge, salaryTiers.w) : 0;
@@ -764,37 +831,46 @@ function simulate() {
     const retire = (hAge === retireAge ? retireH : 0) + (wAge === retireAge ? retireW : 0);
     const pension = (hAge >= pensionAge ? pensionH : 0) + (wAge >= pensionAge ? pensionW : 0);
     let childAllow = 0;
-    if (cAge >= 0 && cAge <= 15) childAllow = allow1 * 12;
-    else if (cAge <= 18) childAllow = allow2 * 12;
+    cAges.forEach(cAge => {
+      if (cAge >= 0 && cAge <= 15) childAllow += allow1 * 12;
+      else if (cAge >= 16 && cAge <= 18) childAllow += allow2 * 12;
+    });
 
-    const livingBaseCost = livingBase * 12 * Math.pow(1 + livingGrowth, i) * (cAge > eduEndAge ? postChildRatio : 1);
+    // 子独立後係数：全ての子供が大学卒業年齢を超えた後に適用（子供なしの場合は適用なし）
+    const allIndependent = children.length > 0 && cAges.every(a => a > eduEndAge);
+    const livingBaseCost = livingBase * 12 * Math.pow(1 + livingGrowth, i) * (allIndependent ? postChildRatio : 1);
     const allowance = (husbandAllow + wifeAllow) * 12 * Math.pow(1 + livingGrowth, i);
     const living = livingBaseCost + allowance;
-    const fullEduCost = getEduCost(cAge, eduPresetKey, eduEndAge);
 
-    // === 子供NISA処理 ===
-    // 0歳以降に運用利息＋積立、その後教育費を取崩
-    let nisaDeposit = 0;
-    let nisaWithdrawal = 0;
-    if (cAge >= 0) {
-      // まず利息（前年残高に対して）
-      nisaBal = nisaBal * (1 + nisaReturn);
-      // 積立 (子年齢が積立終了年齢以下の場合)
-      if (cAge <= nisaEndAge) {
-        nisaDeposit = nisaMonthly * 12;
-        nisaBal += nisaDeposit;
+    // === 子供ごとの教育費・NISA処理 ===
+    let fullEduCost = 0, nisaDeposit = 0, nisaWithdrawal = 0, lessonCost = 0, medicalCost = 0;
+    cAges.forEach((cAge, ci) => {
+      const edu_c = getEduCost(cAge, eduPresetKey, eduEndAge);
+      fullEduCost += edu_c;
+      if (cAge >= 0) {
+        // まず利息（前年残高に対して）
+        nisaBals[ci] = nisaBals[ci] * (1 + nisaReturn);
+        // 積立（子年齢が積立終了年齢以下の場合）
+        if (cAge <= nisaEndAge) {
+          nisaDeposit += nisaMonthly * 12;
+          nisaBals[ci] += nisaMonthly * 12;
+        }
+        // 授業料の取崩（大学のみ充当：cAge>=18、その子のNISAから）
+        if (cAge >= 18 && edu_c > 0 && nisaBals[ci] > 0) {
+          const w = Math.min(edu_c, nisaBals[ci]);
+          nisaWithdrawal += w;
+          nisaBals[ci] -= w;
+        }
+        // 習い事・医療費（子供存在期間中）
+        if (cAge <= eduEndAge) {
+          lessonCost += childLessons * 12;
+          medicalCost += childMedical * 12;
+        }
       }
-      // 教育費の取崩（大学のみ充当：cAge>=18）
-      if (cAge >= 18 && fullEduCost > 0 && nisaBal > 0) {
-        nisaWithdrawal = Math.min(fullEduCost, nisaBal);
-        nisaBal -= nisaWithdrawal;
-      }
-    }
+    });
+    const nisaBal = nisaBals.reduce((s, b) => s + b, 0);
     // 教育費の実質的な家計負担分（NISAでまかなえない分）
     const eduCostNet = fullEduCost - nisaWithdrawal;
-    // 習い事・医療費（子供存在期間中）
-    const lessonCost = (cAge >= 0 && cAge <= eduEndAge) ? childLessons * 12 : 0;
-    const medicalCost = (cAge >= 0 && cAge <= eduEndAge) ? childMedical * 12 : 0;
     // 教育列に表示する家計キャッシュ影響額 = NISA積立 + NISAで不足する授業料 + 習い事 + 医療費
     const eduCost = nisaDeposit + eduCostNet + lessonCost + medicalCost;
 
@@ -842,7 +918,7 @@ function simulate() {
     const totalAsset = cash + invBal + idecoBal + nisaBal;
 
     rows.push({
-      year, hAge, wAge, cAge,
+      year, hAge, wAge, cAges,
       hGross, wGross, hNet, wNet, retire, pension, childAllow,
       totalIncome, living, eduCost, fullEduCost, nisaDeposit, nisaWithdrawal, lessonCost, medicalCost, housing, housingMonthly, housingPurchase, ins, customTotal, tax, totalExpense,
       balance: totalIncome - totalExpense + idecoLump,
@@ -888,7 +964,7 @@ function render(rows) {
   const husbandRefAge = val('husbandAge');
   const wifeRefAge = val('wifeAge');
   function tierLabelOf(age) {
-    if (age <= 34) return '30〜34歳';
+    if (age <= 34) return '〜34歳';
     if (age <= 39) return '35〜39歳';
     if (age <= 44) return '40〜44歳';
     if (age <= 49) return '45〜49歳';
@@ -1111,7 +1187,8 @@ function render(rows) {
     }
     const assetExIdeco = r.totalAsset - r.idecoBal;
     const exIdecoStyle = assetExIdeco < 0 ? 'color:#C0524A;font-weight:bold;background:#FBE9E7;' : '';
-    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${r.cAge}</td><td>${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduTitle}">${eduDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
+    const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
+    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${cAgeDisp}</td><td>${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduTitle}">${eduDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
   }).join('');
 
   // === Housing purchase impact display ===
@@ -1128,13 +1205,15 @@ function render(rows) {
   }
 }
 
-function run() { render(simulate()); }
+function run() {
+  render(simulate());
+  scheduleAutoSave();
+}
 
 // === Education Detail Modal ===
-function showEduDetail() {
+function showEduDetail(childIdx) {
   const startYear = val('startYear');
   const hAgeStart = val('husbandAge');
-  const childBirthYear = val('childBirthYear');
   const eduPresetKey = valStr('eduPreset');
   const eduEndAge = val('eduEndAge');
   const presetName = {
@@ -1146,10 +1225,23 @@ function showEduDetail() {
   }[eduPresetKey] || eduPresetKey;
   document.getElementById('eduModalPreset').textContent = presetName;
 
+  // 子供セレクタ
+  if (childIdx === undefined || childIdx >= children.length) childIdx = 0;
+  const sel = document.getElementById('eduModalChild');
+  sel.innerHTML = children.map((c, i) => `<option value="${i}" ${i === childIdx ? 'selected' : ''}>第${i + 1}子（${c.birthYear}年生）</option>`).join('');
+  sel.style.display = children.length > 1 ? '' : 'none';
+
   const tbody = document.getElementById('eduDetailBody');
+  if (!children.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999;">子供が追加されていません。「基本情報」の「＋ 子供を追加」から追加してください。</td></tr>';
+    document.getElementById('eduModal').classList.add('show');
+    return;
+  }
+  const childBirthYear = children[childIdx].birthYear;
+  const years = Math.max(1, 100 - hAgeStart + 1);
   let html = '';
   let total = 0;
-  for (let i = 0; i < 67; i++) {
+  for (let i = 0; i < years; i++) {
     const year = startYear + i;
     const hAge = hAgeStart + i;
     const cAge = year - childBirthYear;
@@ -1162,7 +1254,7 @@ function showEduDetail() {
       <td><input type="number" class="year-edit" data-cage="${cAge}" value="${cost}"></td>
       <td>${fmt(total)}</td></tr>`;
   }
-  html += `<tr class="tot"><td colspan="4">教育費 累計</td><td>${fmt(total)}</td><td>万円</td></tr>`;
+  html += `<tr class="tot"><td colspan="4">教育費 累計（1人あたり）</td><td>${fmt(total)}</td><td>万円</td></tr>`;
   tbody.innerHTML = html;
 
   // wire up edit inputs
@@ -1170,8 +1262,8 @@ function showEduDetail() {
     inp.addEventListener('change', e => {
       const cage = parseInt(e.target.dataset.cage);
       eduOverrides[cage] = parseFloat(e.target.value) || 0;
-      showEduDetail();  // re-render modal
-      run();            // re-run simulation
+      showEduDetail(childIdx);  // re-render modal
+      run();                    // re-run simulation
     });
   });
 
@@ -1182,7 +1274,8 @@ function closeEduModal() {
 }
 function resetEduOverrides() {
   eduOverrides = {};
-  showEduDetail();
+  const sel = document.getElementById('eduModalChild');
+  showEduDetail(parseInt(sel.value) || 0);
   run();
 }
 
@@ -1197,29 +1290,26 @@ function collectInputs() {
   return inputs;
 }
 
-function saveAll() {
+// === 自動保存（入力のたびにデバウンスして保存） ===
+let autoSaveTimer = null;
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(autoSave, 600);
+}
+function autoSave() {
   const state = {
     inputs: collectInputs(),
-    salaryTiers, rateTiers, customExpenses, eduOverrides,
+    salaryTiers, salaryScenario, rateTiers, customExpenses, eduOverrides, children,
     savedAt: new Date().toISOString(),
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    showStatus(`✅ 保存しました（${new Date().toLocaleTimeString()}）`, true);
+    const el = document.getElementById('saveStatus');
+    el.textContent = `💾 自動保存済み（${new Date().toLocaleTimeString()}）`;
+    el.className = 'save-status success';
   } catch(e) {
     showStatus('⚠️ 保存に失敗：' + e.message, false);
   }
-}
-
-function loadFromSaved() {
-  const data = readSaved();
-  if (!data) {
-    showStatus('保存値が見つかりません', false);
-    return;
-  }
-  applySaved(data);
-  run();
-  showStatus(`📂 読み込みました（保存日時：${data.savedAt ? new Date(data.savedAt).toLocaleString() : '不明'}）`, true);
 }
 
 function readSaved() {
@@ -1227,32 +1317,6 @@ function readSaved() {
     const s = localStorage.getItem(STORAGE_KEY);
     return s ? JSON.parse(s) : null;
   } catch(e) { return null; }
-}
-
-function applySaved(data) {
-  // Apply dynamic arrays first (so renderers use the saved data)
-  if (Array.isArray(data.salaryTiers?.h) && Array.isArray(data.salaryTiers?.w)) {
-    salaryTiers = data.salaryTiers;
-  }
-  if (Array.isArray(data.rateTiers)) rateTiers = data.rateTiers;
-  if (Array.isArray(data.customExpenses)) {
-    customExpenses = data.customExpenses;
-    customIdSeq = Math.max(0, ...customExpenses.map(x => x.id)) + 1;
-  }
-  if (data.eduOverrides && typeof data.eduOverrides === 'object') {
-    eduOverrides = data.eduOverrides;
-  }
-  // Re-render dynamic sections
-  renderSalaryTiers();
-  renderRateTiers();
-  renderCustomExpenses();
-  // Apply input values
-  if (data.inputs) {
-    Object.entries(data.inputs).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val;
-    });
-  }
 }
 
 function resetAll() {
@@ -1273,21 +1337,28 @@ function showStatus(msg, success) {
 // === Init ===
 // Try load saved data BEFORE rendering so renderers use saved arrays
 const _savedData = readSaved();
+let _hasSavedTiers = false;
 if (_savedData) {
-  if (Array.isArray(_savedData.salaryTiers?.h) && Array.isArray(_savedData.salaryTiers?.w)) salaryTiers = _savedData.salaryTiers;
+  if (Array.isArray(_savedData.salaryTiers?.h) && Array.isArray(_savedData.salaryTiers?.w)) {
+    salaryTiers = _savedData.salaryTiers;
+    _hasSavedTiers = true;
+  }
+  if (_savedData.salaryScenario && salaryShapes[_savedData.salaryScenario]) salaryScenario = _savedData.salaryScenario;
   if (Array.isArray(_savedData.rateTiers)) rateTiers = _savedData.rateTiers;
   if (Array.isArray(_savedData.customExpenses)) {
     customExpenses = _savedData.customExpenses;
     customIdSeq = Math.max(0, ...customExpenses.map(x => x.id)) + 1;
   }
   if (_savedData.eduOverrides && typeof _savedData.eduOverrides === 'object') eduOverrides = _savedData.eduOverrides;
+  if (Array.isArray(_savedData.children)) {
+    children = _savedData.children;
+  } else if (_savedData.inputs && _savedData.inputs.childBirthYear) {
+    // 旧バージョンからの移行
+    children = [{ birthYear: parseFloat(_savedData.inputs.childBirthYear) || 2027 }];
+  }
 }
 
-renderSalaryTiers();
-renderRateTiers();
-renderCustomExpenses();
-
-// Apply saved input values after DOM exists
+// Apply saved input values first (現在年収・年齢を給与カーブ生成前に反映)
 if (_savedData && _savedData.inputs) {
   Object.entries(_savedData.inputs).forEach(([id, v]) => {
     const el = document.getElementById(id);
@@ -1296,10 +1367,30 @@ if (_savedData && _savedData.inputs) {
   showStatus(`💾 前回の保存値を自動読込（${_savedData.savedAt ? new Date(_savedData.savedAt).toLocaleString() : ''}）`, true);
 }
 
+// 保存された給与カーブがなければ現在年収から生成
+if (!_hasSavedTiers) generateSalaryTiers();
+// シナリオボタンのactive状態を反映
+document.querySelectorAll('.preset-buttons button').forEach(b => {
+  b.classList.toggle('active', b.textContent === (salaryScenario === 'optimistic' ? '楽観的' : '保守的'));
+});
+
+renderSalaryTiers();
+renderRateTiers();
+renderCustomExpenses();
+renderChildren();
+
 document.querySelectorAll('input, select').forEach(el => {
-  if (!el.closest('.custom-item') && !el.closest('.rate-tier-row') && !el.closest('.tier-row')) {
+  if (!el.closest('.custom-item') && !el.closest('.rate-tier-row') && !el.closest('.tier-row') && !el.closest('#childrenList')) {
     el.addEventListener('input', run);
   }
+});
+// 現在年収・年齢の変更時は給与カーブを再生成
+['currentSalaryH', 'currentSalaryW', 'husbandAge', 'wifeAge'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    generateSalaryTiers();
+    renderSalaryTiers();
+    run();
+  });
 });
 run();
 
