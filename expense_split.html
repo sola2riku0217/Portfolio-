@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>収支按分ツール（夫婦の負担可視化）</title>
+<title>生活費按分ツール（夫婦の負担可視化）</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,13 +52,15 @@ td.label { text-align: left; background: #F7F6F2; font-weight: 600; color: #555;
 td.husband { background: #E5F2EA; }
 td.wife { background: #F8E9E0; }
 td.total { background: #FDF3E0; font-weight: 700; }
-.alloc-table { min-width: 1200px; }
+.alloc-table { min-width: 1000px; }
 .alloc-table th { padding: 4px 6px; }
 .alloc-table input {
   width: 100%; min-width: 60px; padding: 3px 6px; border: 1px solid #ddd; border-radius: 4px;
   text-align: right; background: #F7F6F2; color: #444; font-size: 12px; box-sizing: border-box;
 }
+.alloc-table input[type="text"] { text-align: left; min-width: 100px; }
 .alloc-table input:focus { outline: none; border-color: #4F7F67; }
+.alloc-table td.total { background: #FDF3E0; font-weight: 700; text-align: right; }
 .alloc-table tr.subtotal td { background: #FDF3E0; font-weight: 600; }
 .alloc-table .savings-cell { background: #E5F2EA; color: #38573A; font-weight: 700; }
 .alloc-table .balance-good { color: #4F7F67; font-weight: 700; }
@@ -82,6 +84,7 @@ td.total { background: #FDF3E0; font-weight: 700; }
   display: inline-block; background: #FDF3E0; border: 1px solid #F0DBA8; color: #97690F;
   border-radius: 999px; padding: 4px 14px; font-size: 13px; font-weight: 600; margin-left: 8px;
 }
+.btn-add { background: #4F7F67; color: white; border-color: #4F7F67; }
 @media (max-width: 900px) {
   body { padding: 12px; }
   .row2, .row4 { grid-template-columns: 1fr; }
@@ -91,7 +94,7 @@ td.total { background: #FDF3E0; font-weight: 700; }
 </head>
 <body>
 <div class="container">
-  <h1>💸 収支按分ツール（夫婦の負担可視化）</h1>
+  <h1>💸 生活費按分ツール（夫婦の負担可視化）</h1>
 
   <div class="toolbar">
     <button class="btn btn-reset" onclick="resetAll()">🔄 デフォルトに戻す</button>
@@ -152,103 +155,105 @@ td.total { background: #FDF3E0; font-weight: 700; }
     </div>
   </div>
 
-  <!-- 按分入力 -->
+  <!-- 支出項目 -->
   <div class="panel">
-    <h2>⚖️ 按分入力（誰の・どこから・いくら）</h2>
-    <p class="note" style="font-size:13px;color:#555;">「月手取り」行は <strong>万円/月</strong>、「賞与」行は <strong>万円/年</strong> で入力。残額（手取り − 拠出）は<strong>個人貯金</strong>へ。</p>
+    <h2>📋 支出項目（誰が・いくら拠出するか）</h2>
+    <p class="note" style="font-size:13px;color:#555;">「月次」は<strong>万円/月</strong>、「賞与」は<strong>万円/年</strong>で入力。残額（手取り − 拠出）は<strong>個人貯金</strong>へ。下の「＋ 支出項目を追加」から保険料やペット費用など好きな項目を行として増やせます。</p>
     <div class="table-scroll">
     <table class="alloc-table">
       <thead>
         <tr>
-          <th rowspan="2">出所</th>
-          <th colspan="2">🍱 生活費</th>
-          <th colspan="2">🏠 住宅ローン</th>
-          <th colspan="2">🏘️ 住宅固定費<br><span style="font-size:10px;font-weight:400;">(固都税+修繕)</span></th>
-          <th colspan="2">🎓 教育費</th>
-          <th colspan="2">📈 NISA</th>
-          <th colspan="2">💎 二人の貯金</th>
-          <th colspan="2">💰 個人貯金（残り）</th>
-        </tr>
-        <tr>
-          <th>夫</th><th>妻</th><th>夫</th><th>妻</th><th>夫</th><th>妻</th><th>夫</th><th>妻</th><th>夫</th><th>妻</th><th>夫</th><th>妻</th><th>夫</th><th>妻</th>
+          <th style="text-align:left;">項目名</th>
+          <th>夫 月次<br>(万/月)</th>
+          <th>妻 月次<br>(万/月)</th>
+          <th>夫 賞与<br>(万/年)</th>
+          <th>妻 賞与<br>(万/年)</th>
+          <th>夫 年計<br>(万/年)</th>
+          <th>妻 年計<br>(万/年)</th>
+          <th>必要額<br>(万/年)</th>
+          <th>過不足</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td class="label">月手取り<br><span style="font-size:11px;color:#999;font-weight:400;">(万/月)</span></td>
+          <td class="label" style="text-align:left;">🍱 生活費</td>
           <td><input type="number" id="hMonToLiv" value="8" step="0.5"></td>
           <td><input type="number" id="wMonToLiv" value="17" step="0.5"></td>
-          <td><input type="number" id="hMonToLoan" value="24" step="0.5"></td>
-          <td><input type="number" id="wMonToLoan" value="0" step="0.5"></td>
-          <td><input type="number" id="hMonToHfix" value="0" step="0.5"></td>
-          <td><input type="number" id="wMonToHfix" value="0" step="0.5"></td>
-          <td><input type="number" id="hMonToEdu" value="3" step="0.5"></td>
-          <td><input type="number" id="wMonToEdu" value="4" step="0.5"></td>
-          <td><input type="number" id="hMonToNisa" value="1.5" step="0.5"></td>
-          <td><input type="number" id="wMonToNisa" value="1.5" step="0.5"></td>
-          <td><input type="number" id="hMonToJoint" value="5" step="0.5"></td>
-          <td><input type="number" id="wMonToJoint" value="3" step="0.5"></td>
-          <td class="savings-cell" id="hMonSavings">-</td>
-          <td class="savings-cell" id="wMonSavings">-</td>
-        </tr>
-        <tr>
-          <td class="label">賞与<br><span style="font-size:11px;color:#999;font-weight:400;">(万/年)</span></td>
           <td><input type="number" id="hBonToLiv" value="0" step="10"></td>
           <td><input type="number" id="wBonToLiv" value="0" step="10"></td>
+          <td class="total" id="livHTotal">-</td>
+          <td class="total" id="livWTotal">-</td>
+          <td id="livRequired" style="text-align:center;background:#FDF3E0;">-</td>
+          <td id="livBalance" style="text-align:center;">-</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="label" style="text-align:left;">🏠 住宅ローン</td>
+          <td><input type="number" id="hMonToLoan" value="24" step="0.5"></td>
+          <td><input type="number" id="wMonToLoan" value="0" step="0.5"></td>
           <td><input type="number" id="hBonToLoan" value="0" step="10"></td>
           <td><input type="number" id="wBonToLoan" value="0" step="10"></td>
+          <td class="total" id="loanHTotal">-</td>
+          <td class="total" id="loanWTotal">-</td>
+          <td id="loanRequired" style="text-align:center;background:#FDF3E0;">-</td>
+          <td id="loanBalance" style="text-align:center;">-</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="label" style="text-align:left;">🏘️ 住宅固定費<br><span style="font-size:10px;color:#999;font-weight:400;">(固都税+修繕)</span></td>
+          <td><input type="number" id="hMonToHfix" value="0" step="0.5"></td>
+          <td><input type="number" id="wMonToHfix" value="0" step="0.5"></td>
           <td><input type="number" id="hBonToHfix" value="44" step="5"></td>
           <td><input type="number" id="wBonToHfix" value="0" step="5"></td>
+          <td class="total" id="hfixHTotal">-</td>
+          <td class="total" id="hfixWTotal">-</td>
+          <td id="hfixRequired" style="text-align:center;background:#FDF3E0;">-</td>
+          <td id="hfixBalance" style="text-align:center;">-</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="label" style="text-align:left;">🎓 教育費</td>
+          <td><input type="number" id="hMonToEdu" value="3" step="0.5"></td>
+          <td><input type="number" id="wMonToEdu" value="4" step="0.5"></td>
           <td><input type="number" id="hBonToEdu" value="0" step="10"></td>
           <td><input type="number" id="wBonToEdu" value="0" step="10"></td>
+          <td class="total" id="eduHTotal">-</td>
+          <td class="total" id="eduWTotal">-</td>
+          <td id="eduRequired" style="text-align:center;background:#FDF3E0;">-</td>
+          <td id="eduBalance" style="text-align:center;">-</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="label" style="text-align:left;">📈 NISA</td>
+          <td><input type="number" id="hMonToNisa" value="1.5" step="0.5"></td>
+          <td><input type="number" id="wMonToNisa" value="1.5" step="0.5"></td>
           <td><input type="number" id="hBonToNisa" value="0" step="10"></td>
           <td><input type="number" id="wBonToNisa" value="0" step="10"></td>
+          <td class="total" id="nisaHTotal">-</td>
+          <td class="total" id="nisaWTotal">-</td>
+          <td style="text-align:center;background:#EEF0F7;color:#777;font-size:11px;">任意<br>(資産運用)</td>
+          <td id="nisaBalance" style="text-align:center;color:#40497A;font-weight:600;">-</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="label" style="text-align:left;">💎 二人の貯金</td>
+          <td><input type="number" id="hMonToJoint" value="5" step="0.5"></td>
+          <td><input type="number" id="wMonToJoint" value="3" step="0.5"></td>
           <td><input type="number" id="hBonToJoint" value="100" step="10"></td>
           <td><input type="number" id="wBonToJoint" value="50" step="10"></td>
-          <td class="savings-cell" id="hBonSavings">-</td>
-          <td class="savings-cell" id="wBonSavings">-</td>
-        </tr>
-        <tr class="subtotal">
-          <td class="label">拠出合計<br><span style="font-size:11px;color:#999;font-weight:400;">(万/年)</span></td>
-          <td id="livHTotal">-</td>
-          <td id="livWTotal">-</td>
-          <td id="loanHTotal">-</td>
-          <td id="loanWTotal">-</td>
-          <td id="hfixHTotal" style="background:#F8E9E0;">-</td>
-          <td id="hfixWTotal" style="background:#F8E9E0;">-</td>
-          <td id="eduHTotal">-</td>
-          <td id="eduWTotal">-</td>
-          <td id="nisaHTotal" style="background:#EEF0F7;">-</td>
-          <td id="nisaWTotal" style="background:#EEF0F7;">-</td>
-          <td id="jointHTotal" style="background:#F0E5F5;">-</td>
-          <td id="jointWTotal" style="background:#F0E5F5;">-</td>
-          <td class="savings-cell" id="hSavingsTotal">-</td>
-          <td class="savings-cell" id="wSavingsTotal">-</td>
-        </tr>
-        <tr>
-          <td class="label">必要額<br><span style="font-size:11px;color:#999;font-weight:400;">(万/年)</span></td>
-          <td colspan="2" id="livRequired" style="text-align:center;background:#FDF3E0;">-</td>
-          <td colspan="2" id="loanRequired" style="text-align:center;background:#FDF3E0;">-</td>
-          <td colspan="2" id="hfixRequired" style="text-align:center;background:#FDF3E0;">-</td>
-          <td colspan="2" id="eduRequired" style="text-align:center;background:#FDF3E0;">-</td>
-          <td colspan="2" id="nisaRef" style="text-align:center;background:#EEF0F7;color:#777;font-size:11px;">任意（資産運用）</td>
-          <td colspan="2" style="text-align:center;background:#F0E5F5;color:#777;font-size:11px;">任意（共通貯蓄）</td>
-          <td colspan="2"></td>
-        </tr>
-        <tr>
-          <td class="label">過不足<br><span style="font-size:11px;color:#999;font-weight:400;">(拠出−必要)</span></td>
-          <td colspan="2" id="livBalance" style="text-align:center;">-</td>
-          <td colspan="2" id="loanBalance" style="text-align:center;">-</td>
-          <td colspan="2" id="hfixBalance" style="text-align:center;">-</td>
-          <td colspan="2" id="eduBalance" style="text-align:center;">-</td>
-          <td colspan="2" id="nisaBalance" style="text-align:center;color:#40497A;font-weight:600;">-</td>
-          <td colspan="2" id="jointBalance" style="text-align:center;color:#7A5A8C;font-weight:600;">-</td>
-          <td colspan="2"></td>
+          <td class="total" id="jointHTotal">-</td>
+          <td class="total" id="jointWTotal">-</td>
+          <td style="text-align:center;background:#F0E5F5;color:#777;font-size:11px;">任意<br>(共通貯蓄)</td>
+          <td id="jointBalance" style="text-align:center;color:#7A5A8C;font-weight:600;">-</td>
+          <td></td>
         </tr>
       </tbody>
+      <tbody id="customItemsBody"></tbody>
     </table>
     </div>
-    <div class="note">※ 生活費・住宅・教育費の「過不足」が <strong>0</strong> になるよう調整。「二人の貯金」は任意の共通貯蓄。<br>※ 残り（手取り − 全拠出）は個人貯金へ。「⚖️ 収入比で按分」で年間手取り比率の配分を再セット</div>
+    <button type="button" class="btn btn-add" style="margin-top:12px;" onclick="addCustomItem()">＋ 支出項目を追加</button>
+    <div class="note" style="margin-top:10px;">※ 生活費・住宅・教育費の「過不足」が <strong>0</strong> になるよう調整。「二人の貯金」は任意の共通貯蓄。<br>※ 追加した支出項目も個人貯金の残額・負担率・サンキー図に自動反映されます。「⚖️ 収入比で按分」で固定項目を収入比の配分に再セット</div>
   </div>
 
   <!-- Sankey -->
@@ -290,7 +295,11 @@ td.total { background: #FDF3E0; font-weight: 700; }
           <td class="husband" id="hJoint" style="font-weight:bold;">-</td>
           <td class="wife" id="wJoint" style="font-weight:bold;">-</td>
           <td class="total" id="totJoint" style="font-weight:bold;">-</td></tr>
-        <tr><td class="label">負担合計（年）<br><span style="font-size:11px;color:#999;">生活＋住宅＋教育＋NISA＋共通貯金</span></td>
+        <tr><td class="label">➕ 追加支出 拠出（年）</td>
+          <td class="husband" id="hCustomSum" style="font-weight:bold;">-</td>
+          <td class="wife" id="wCustomSum" style="font-weight:bold;">-</td>
+          <td class="total" id="totCustomSum" style="font-weight:bold;">-</td></tr>
+        <tr><td class="label">負担合計（年）<br><span style="font-size:11px;color:#999;">生活＋住宅＋教育＋NISA＋共通貯金＋追加支出</span></td>
           <td class="husband" id="hBurden">-</td><td class="wife" id="wBurden">-</td><td class="total" id="totBurden">-</td></tr>
         <tr><td class="label">💰 個人貯金（残額・年）</td>
           <td class="husband" id="hSav" style="font-weight:bold;color:#38573A;">-</td>
@@ -321,6 +330,7 @@ let simWifeAllowance = 0;
 let simNisaMonthly = 0;
 let simHousingFixedYearly = 0;  // 固定資産税＋都市計画税＋修繕積立金
 let simChildCount = 0;
+let customItems = [];  // ユーザーが追加した支出項目のID一覧
 
 function fmt(n) { return (Math.round(n * 10) / 10).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
 function fmtInt(n) { return Math.round(n).toLocaleString(); }
@@ -345,6 +355,7 @@ function autoSave() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       inputs: collectInputs(),
+      customItems: customItems,
       savedAt: new Date().toISOString()
     }));
     const el = document.getElementById('saveStatus');
@@ -378,6 +389,82 @@ function showStatus(msg, success) {
   el.textContent = msg;
   el.className = 'save-status' + (success ? ' success' : '');
   if (success) setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, 4000);
+}
+
+// === カスタム支出項目（自由に追加・削除できる支出行） ===
+function addCustomItem() {
+  const id = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  customItems.push(id);
+  renderCustomItems();
+  bindRunListeners();
+  run();
+}
+function removeCustomItem(id) {
+  customItems = customItems.filter(x => x !== id);
+  renderCustomItems();
+  bindRunListeners();
+  run();
+  scheduleAutoSave();
+}
+function renderCustomItems() {
+  const body = document.getElementById('customItemsBody');
+  if (!body) return;
+  if (customItems.length === 0) {
+    body.innerHTML = '';
+    return;
+  }
+  body.innerHTML = customItems.map(id => `
+        <tr data-custom-id="${id}">
+          <td style="text-align:left;"><input type="text" id="custom_name_${id}" placeholder="例: 保険料"></td>
+          <td><input type="number" id="custom_hMon_${id}" value="0" step="0.5"></td>
+          <td><input type="number" id="custom_wMon_${id}" value="0" step="0.5"></td>
+          <td><input type="number" id="custom_hBon_${id}" value="0" step="5"></td>
+          <td><input type="number" id="custom_wBon_${id}" value="0" step="5"></td>
+          <td class="total" id="custom_hTotal_${id}">-</td>
+          <td class="total" id="custom_wTotal_${id}">-</td>
+          <td style="text-align:center;color:#999;font-size:11px;">自由入力</td>
+          <td style="text-align:center;color:#999;">-</td>
+          <td><button type="button" class="btn btn-reset" style="padding:4px 10px;font-size:11px;" onclick="removeCustomItem('${id}')">削除</button></td>
+        </tr>`).join('') + (customItems.length >= 1 ? `
+        <tr class="subtotal">
+          <td class="label" style="text-align:left;">追加支出 合計</td>
+          <td></td><td></td><td></td><td></td>
+          <td class="total" id="customHGrandTotal">-</td>
+          <td class="total" id="customWGrandTotal">-</td>
+          <td></td><td></td><td></td>
+        </tr>` : '');
+}
+function bindRunListeners() {
+  document.querySelectorAll('input').forEach(el => {
+    el.removeEventListener('input', run);
+    el.addEventListener('input', run);
+  });
+}
+function computeCustomTotals() {
+  let hMon = 0, wMon = 0, hBon = 0, wBon = 0;
+  customItems.forEach(id => {
+    hMon += parseFloat((document.getElementById('custom_hMon_' + id) || {}).value) || 0;
+    wMon += parseFloat((document.getElementById('custom_wMon_' + id) || {}).value) || 0;
+    hBon += parseFloat((document.getElementById('custom_hBon_' + id) || {}).value) || 0;
+    wBon += parseFloat((document.getElementById('custom_wBon_' + id) || {}).value) || 0;
+  });
+  return { hMon, wMon, hBon, wBon, hYear: hMon * 12 + hBon, wYear: wMon * 12 + wBon };
+}
+function updateCustomItemDisplays(custom) {
+  customItems.forEach(id => {
+    const hMonV = parseFloat((document.getElementById('custom_hMon_' + id) || {}).value) || 0;
+    const wMonV = parseFloat((document.getElementById('custom_wMon_' + id) || {}).value) || 0;
+    const hBonV = parseFloat((document.getElementById('custom_hBon_' + id) || {}).value) || 0;
+    const wBonV = parseFloat((document.getElementById('custom_wBon_' + id) || {}).value) || 0;
+    const hT = document.getElementById('custom_hTotal_' + id);
+    const wT = document.getElementById('custom_wTotal_' + id);
+    if (hT) hT.textContent = fmtInt(hMonV * 12 + hBonV) + ' 万円/年';
+    if (wT) wT.textContent = fmtInt(wMonV * 12 + wBonV) + ' 万円/年';
+  });
+  const hGrand = document.getElementById('customHGrandTotal');
+  const wGrand = document.getElementById('customWGrandTotal');
+  if (hGrand) hGrand.textContent = fmtInt(custom.hYear) + ' 万円/年';
+  if (wGrand) wGrand.textContent = fmtInt(custom.wYear) + ' 万円/年';
 }
 
 // === Load from simulator ===
@@ -537,6 +624,17 @@ function autoFillAllocation() {
   set('wBonToHfix', Math.round(simHousingFixedYearly * rW));
   set('hBonToJoint', Math.round(150 * rH));
   set('wBonToJoint', Math.round(150 * rW));
+  // 追加した支出項目も、各項目の合計額は維持したまま収入比で再配分
+  customItems.forEach(id => {
+    const monTotal = (parseFloat((document.getElementById('custom_hMon_' + id) || {}).value) || 0)
+                    + (parseFloat((document.getElementById('custom_wMon_' + id) || {}).value) || 0);
+    const bonTotal = (parseFloat((document.getElementById('custom_hBon_' + id) || {}).value) || 0)
+                    + (parseFloat((document.getElementById('custom_wBon_' + id) || {}).value) || 0);
+    if (document.getElementById('custom_hMon_' + id)) set('custom_hMon_' + id, (monTotal * rH).toFixed(1));
+    if (document.getElementById('custom_wMon_' + id)) set('custom_wMon_' + id, (monTotal * rW).toFixed(1));
+    if (document.getElementById('custom_hBon_' + id)) set('custom_hBon_' + id, Math.round(bonTotal * rH));
+    if (document.getElementById('custom_wBon_' + id)) set('custom_wBon_' + id, Math.round(bonTotal * rW));
+  });
   run();
 }
 
@@ -598,21 +696,21 @@ function run() {
   const hTotalYear = hMonYear + hBon;
   const wTotalYear = wMonYear + wBon;
 
+  // カスタム支出項目（自由入力）
+  const custom = computeCustomTotals();
+  updateCustomItemDisplays(custom);
+
   // 月手取り行: 貯金（月手取り − 拠出）
-  const hMonOut = hMonToLivM + hMonToLoanM + hMonToHfixM + hMonToEduM + hMonToNisaM + hMonToJointM;
-  const wMonOut = wMonToLivM + wMonToLoanM + wMonToHfixM + wMonToEduM + wMonToNisaM + wMonToJointM;
+  const hMonOut = hMonToLivM + hMonToLoanM + hMonToHfixM + hMonToEduM + hMonToNisaM + hMonToJointM + custom.hMon;
+  const wMonOut = wMonToLivM + wMonToLoanM + wMonToHfixM + wMonToEduM + wMonToNisaM + wMonToJointM + custom.wMon;
   const hMonSavM = hMon - hMonOut;
   const wMonSavM = wMon - wMonOut;
-  document.getElementById('hMonSavings').textContent = fmt(hMonSavM) + ' 万円/月';
-  document.getElementById('wMonSavings').textContent = fmt(wMonSavM) + ' 万円/月';
 
   // 賞与行
-  const hBonOut = hBonToLiv + hBonToLoan + hBonToHfix + hBonToEdu + hBonToNisa + hBonToJoint;
-  const wBonOut = wBonToLiv + wBonToLoan + wBonToHfix + wBonToEdu + wBonToNisa + wBonToJoint;
+  const hBonOut = hBonToLiv + hBonToLoan + hBonToHfix + hBonToEdu + hBonToNisa + hBonToJoint + custom.hBon;
+  const wBonOut = wBonToLiv + wBonToLoan + wBonToHfix + wBonToEdu + wBonToNisa + wBonToJoint + custom.wBon;
   const hBonSav = hBon - hBonOut;
   const wBonSav = wBon - wBonOut;
-  document.getElementById('hBonSavings').textContent = fmtInt(hBonSav) + ' 万円/年';
-  document.getElementById('wBonSavings').textContent = fmtInt(wBonSav) + ' 万円/年';
 
   // Column totals (年額)
   const livHTotal = hMonToLiv + hBonToLiv;
@@ -647,8 +745,6 @@ function run() {
   document.getElementById('nisaWTotal').textContent = fmtInt(nisaWTotal) + ' 万円/年';
   document.getElementById('jointHTotal').textContent = fmtInt(jointHTotal) + ' 万円/年';
   document.getElementById('jointWTotal').textContent = fmtInt(jointWTotal) + ' 万円/年';
-  document.getElementById('hSavingsTotal').textContent = fmtInt(hSavY) + ' 万円/年';
-  document.getElementById('wSavingsTotal').textContent = fmtInt(wSavY) + ' 万円/年';
   document.getElementById('livRequired').textContent = fmtInt(livY) + ' 万円/年';
   document.getElementById('loanRequired').textContent = fmtInt(loanY) + ' 万円/年';
   document.getElementById('hfixRequired').textContent = fmtInt(simHousingFixedYearly) + ' 万円/年';
@@ -666,8 +762,8 @@ function run() {
   document.getElementById('jointBalance').innerHTML = `<span style="color:#7A5A8C;font-weight:bold;">${fmtInt(jointTotal)} 万円/年 拠出</span>`;
 
   // Person-level totals
-  const hBurden = livHTotal + loanHTotal + hfixHTotal + eduHTotal + nisaHTotal + jointHTotal;
-  const wBurden = livWTotal + loanWTotal + hfixWTotal + eduWTotal + nisaWTotal + jointWTotal;
+  const hBurden = livHTotal + loanHTotal + hfixHTotal + eduHTotal + nisaHTotal + jointHTotal + custom.hYear;
+  const wBurden = livWTotal + loanWTotal + hfixWTotal + eduWTotal + nisaWTotal + jointWTotal + custom.wYear;
   const hRatio = hTotalYear > 0 ? hBurden / hTotalYear : 0;
   const wRatio = wTotalYear > 0 ? wBurden / wTotalYear : 0;
   const totRatio = (hTotalYear + wTotalYear) > 0 ? (hBurden + wBurden) / (hTotalYear + wTotalYear) : 0;
@@ -684,6 +780,7 @@ function run() {
   setN('hEdu', eduHTotal); setN('wEdu', eduWTotal); setN('totEdu', eduTotal);
   setN('hNisa', nisaHTotal); setN('wNisa', nisaWTotal); setN('totNisa', nisaTotal);
   setN('hJoint', jointHTotal); setN('wJoint', jointWTotal); setN('totJoint', jointTotal);
+  setN('hCustomSum', custom.hYear); setN('wCustomSum', custom.wYear); setN('totCustomSum', custom.hYear + custom.wYear);
   setN('hBurden', hBurden); setN('wBurden', wBurden); setN('totBurden', hBurden + wBurden);
   setN('hSav', hSavY); setN('wSav', wSavY); setN('totSav', hSavY + wSavY);
   document.getElementById('hRatio').textContent = fmtPct(hRatio);
@@ -772,6 +869,18 @@ function run() {
   addLink(3, 9, wBonToJoint, colJoint, '妻賞与', '二人の貯金');
   addLink(3, 11, wBonSavY, colSavW, '妻賞与', '妻個人貯金');
 
+  // カスタム支出項目（自由入力）をSankeyに追加
+  if (customItems.length > 0 && (custom.hYear + custom.wYear) > 0.01) {
+    const customNodeIdx = nodes.length;
+    nodes.push(`➕ 追加支出\n${fmtInt(custom.hYear + custom.wYear)}万/年`);
+    nodeColors.push('#3E7A6D');
+    const colCustom = 'rgba(62,122,109,0.45)';
+    addLink(0, customNodeIdx, custom.hMon * 12, colCustom, '夫月', '追加支出');
+    addLink(1, customNodeIdx, custom.hBon, colCustom, '夫賞与', '追加支出');
+    addLink(2, customNodeIdx, custom.wMon * 12, colCustom, '妻月', '追加支出');
+    addLink(3, customNodeIdx, custom.wBon, colCustom, '妻賞与', '追加支出');
+  }
+
   const data = [{
     type: 'sankey', orientation: 'h',
     valueformat: ',.0f',
@@ -805,13 +914,18 @@ function run() {
 // === Init ===
 const _saved = readSaved();
 if (_saved) {
+  if (Array.isArray(_saved.customItems) && _saved.customItems.length) {
+    customItems = _saved.customItems;
+    renderCustomItems();
+  }
   applySaved(_saved);
+  bindRunListeners();
   loadFromSim(false);  // シミュ支出は最新を反映しつつ、按分は保存値を維持
   showStatus(`💾 前回保存値を自動読込`, true);
 } else {
+  bindRunListeners();
   loadFromSim(true);   // 初回：手取りを推定し収入比で按分
 }
-document.querySelectorAll('input').forEach(el => el.addEventListener('input', run));
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
