@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FBF6EE;-webkit-font-smoothing:antialiased;}
+input,textarea,select{font-family:'Noto Sans JP',sans-serif;}
+@keyframes toastfade{from{opacity:0;transform:translate(-50%,6px);}to{opacity:1;transform:translate(-50%,0);}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#FBF6EE;font-family:'Noto Sans JP',-apple-system,sans-serif;color:#4A4238;position:relative;overflow-x:hidden;">
+  <div style="position:absolute;top:-160px;left:-140px;width:400px;height:400px;border-radius:50%;background:#F7E7CF;opacity:.7;"></div>
+  <div style="position:absolute;top:600px;right:-160px;width:420px;height:420px;border-radius:50%;background:#F3E3E0;opacity:.6;"></div>
+
+  <div style="position:relative;max-width:640px;margin:0 auto;padding:32px 18px 120px;">
+
+    <div style="text-align:center;margin-bottom:22px;">
+      <span style="font-size:12px;letter-spacing:.28em;color:#B5A288;font-weight:700;">GROWTH RECORD</span>
+      <h1 style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:26px;color:#5B4632;margin:8px 0 0;display:inline-block;padding-bottom:8px;border-bottom:3px solid #D0794F;">そだちのカレンダー</h1>
+    </div>
+
+    <sc-if value="{{ showSetup }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1.5px solid #F0E4D3;border-radius:22px;padding:26px;box-shadow:0 8px 20px rgba(139,101,63,.08);">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;font-weight:700;color:#C98A5B;letter-spacing:.06em;margin-bottom:6px;">お子さんの生年月日を入力してください</label>
+          <input type="date" value="{{ setupBirthdate }}" onChange="{{ onSetupBirthdateChange }}" max="{{ todayStr }}" style="width:100%;box-sizing:border-box;font-size:16px;color:#5B4632;background:#FBF6EE;border:1.5px solid #EFD9BE;border-radius:12px;padding:14px 14px;"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:13px;font-weight:700;color:#C98A5B;letter-spacing:.06em;margin-bottom:6px;">お名前・ニックネーム（任意）</label>
+          <input type="text" value="{{ setupName }}" onChange="{{ onSetupNameChange }}" placeholder="例：ゆうくん" style="width:100%;box-sizing:border-box;font-size:16px;color:#5B4632;background:#FBF6EE;border:1.5px solid #EFD9BE;border-radius:12px;padding:14px 14px;"/>
+        </div>
+        <div style="text-align:center;">
+          <button onClick="{{ confirmSetup }}" style="background:#D0794F;color:#fff;border:none;border-radius:999px;padding:13px 32px;font-size:16px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;cursor:pointer;box-shadow:0 6px 14px rgba(208,121,79,.35);">はじめる</button>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:#B5A288;line-height:1.8;margin-top:22px;">生年月日をもとに、成長イベントの目安時期をカレンダーに色付けして表示します。<br/>発達には個人差があります。あくまで目安としてご覧ください。</p>
+    </sc-if>
+
+    <sc-if value="{{ hasProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1.5px solid #F0E4D3;border-radius:22px;padding:22px 24px;box-shadow:0 8px 20px rgba(139,101,63,.06);margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <span style="font-family:'Zen Maru Gothic',sans-serif;font-size:30px;font-weight:900;color:#B06A3E;">{{ ageLabel }}</span>
+            </div>
+            <div style="font-size:12.5px;color:#9A8B72;margin-top:2px;">{{ ageSubLabel }}</div>
+          </div>
+          <button onClick="{{ openEditProfile }}" style="margin-left:auto;background:#FBF6EE;color:#9A8B72;border:1px solid #F0E4D3;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">生年月日を編集</button>
+        </div>
+        <sc-if value="{{ hasUpcoming }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px;padding:12px 14px;background:#E9EDDD;border-radius:14px;display:flex;gap:12px;align-items:center;">
+            <div style="width:40px;height:40px;border-radius:12px;background:{{ upcomingColor }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <sc-if value="{{ upcomingIsDot }}"><span style="width:16px;height:16px;border-radius:50%;background:#fff;opacity:.9;"></span></sc-if>
+              <sc-if value="{{ upcomingIsRing }}"><span style="width:20px;height:20px;border-radius:50%;border:3px solid #fff;opacity:.9;"></span></sc-if>
+              <sc-if value="{{ upcomingIsBars }}"><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span style="width:12px;height:12px;border-radius:50%;background:#fff;"></span><span style="width:22px;height:5px;border-radius:3px;background:#fff;opacity:.85;"></span></div></sc-if>
+              <sc-if value="{{ upcomingIsFoot }}"><div style="position:relative;width:22px;height:22px;"><span style="position:absolute;top:0;left:2px;width:11px;height:15px;border-radius:60%;background:#fff;opacity:.9;transform:rotate(-15deg);"></span><span style="position:absolute;bottom:0;right:0;width:11px;height:15px;border-radius:60%;background:#fff;opacity:.6;transform:rotate(15deg);"></span></div></sc-if>
+              <sc-if value="{{ upcomingIsSpeech }}"><div style="position:relative;width:24px;height:18px;"><span style="position:absolute;inset:0;border-radius:8px;background:#fff;opacity:.9;"></span><span style="position:absolute;bottom:-5px;left:6px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #fff;opacity:.9;"></span></div></sc-if>
+              <sc-if value="{{ upcomingIsSeat }}"><div style="position:relative;width:22px;height:22px;border-radius:8px;border:3px solid #fff;opacity:.9;box-sizing:border-box;"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;border:2px solid #fff;"></span></div></sc-if>
+            </div>
+            <div style="font-size:13px;line-height:1.6;color:#5B4632;">そろそろ「<b>{{ upcomingLabel }}</b>」の時期かも（目安：{{ upcomingRange }}）。見られたら記録してあげてくださいね。</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="background:#fff;border:1.5px solid #F0E4D3;border-radius:22px;padding:18px 16px 24px;box-shadow:0 8px 20px rgba(139,101,63,.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px;">
+          <button onClick="{{ prevMonth }}" style="width:34px;height:34px;border-radius:50%;border:1px solid #F0E4D3;background:#FBF6EE;color:#9A8B72;font-size:16px;cursor:pointer;">‹</button>
+          <span style="font-family:'Zen Maru Gothic',sans-serif;font-size:19px;font-weight:700;color:#5B4632;">{{ monthLabel }}</span>
+          <div style="display:flex;gap:6px;">
+            <button onClick="{{ goToday }}" style="width:34px;height:34px;border-radius:50%;border:1px solid #F0E4D3;background:#FBF6EE;color:#D0794F;font-size:12px;cursor:pointer;">●</button>
+            <button onClick="{{ nextMonth }}" style="width:34px;height:34px;border-radius:50%;border:1px solid #F0E4D3;background:#FBF6EE;color:#9A8B72;font-size:16px;cursor:pointer;">›</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:6px;">
+          <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+            <span style="font-size:11px;color:{{ w.color }};padding:4px 0;">{{ w.label }}</span>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          <sc-for list="{{ calendarCells }}" as="c" hint-placeholder-count="42">
+            <div onClick="{{ c.onClick }}" style="position:relative;aspect-ratio:1/1;border-radius:9px;background:#fff;border:1.5px solid {{ c.borderColor }};box-shadow:{{ c.todayShadow }};display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:4px 2px 2px;box-sizing:border-box;cursor:pointer;overflow:hidden;opacity:{{ c.opacity }};">
+              <img data-role="cell-photo" data-date="{{ c.key }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ycQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICTAEAOw==" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:{{ c.photoDisplay }};"/>
+              <sc-if value="{{ c.showNum }}" hint-placeholder-val="{{ true }}">
+                <span style="font-size:11.5px;color:{{ c.numColor }};">{{ c.dayNum }}</span>
+                <div style="display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;justify-content:center;">
+                  <sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="0">
+                    <div style="width:13px;height:13px;border-radius:4px;background:{{ d.color }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <sc-if value="{{ d.isDot }}"><span style="width:5px;height:5px;border-radius:50%;background:#fff;opacity:.95;"></span></sc-if>
+                      <sc-if value="{{ d.isRing }}"><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid #fff;opacity:.95;"></span></sc-if>
+                      <sc-if value="{{ d.isBars }}"><div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><span style="width:3.5px;height:3.5px;border-radius:50%;background:#fff;"></span><span style="width:7px;height:2px;border-radius:1px;background:#fff;opacity:.9;"></span></div></sc-if>
+                      <sc-if value="{{ d.isFoot }}"><div style="position:relative;width:8px;height:8px;"><span style="position:absolute;top:0;left:0.5px;width:4px;height:5.5px;border-radius:60%;background:#fff;opacity:.95;transform:rotate(-15deg);"></span><span style="position:absolute;bottom:0;right:0;width:4px;height:5.5px;border-radius:60%;background:#fff;opacity:.7;transform:rotate(15deg);"></span></div></sc-if>
+                      <sc-if value="{{ d.isSpeech }}"><div style="position:relative;width:9px;height:6.5px;"><span style="position:absolute;inset:0;border-radius:2.5px;background:#fff;opacity:.95;"></span><span style="position:absolute;bottom:-2.5px;left:2px;width:0;height:0;border-left:2px solid transparent;border-right:2px solid transparent;border-top:2.5px solid #fff;opacity:.95;"></span></div></sc-if>
+                      <sc-if value="{{ d.isSeat }}"><div style="position:relative;width:8px;height:8px;border-radius:2.5px;border:1.5px solid #fff;opacity:.95;box-sizing:border-box;"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:3px;border-radius:50%;border:1px solid #fff;"></span></div></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:14px;margin-top:12px;font-size:11px;color:#9A8B72;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:3px;background:#E9EDDD;display:inline-block;"></span>成長の目安時期</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#D0794F;display:inline-block;"></span>記録した日</span>
+        </div>
+
+        <sc-if value="{{ hasRelevantMilestones }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;">
+            <div style="font-size:12.5px;color:#9A8B72;margin-bottom:8px;">この月の成長の目安</div>
+            <sc-for list="{{ relevantMilestones }}" as="m" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:#FBF6EE;border:1px solid #F0E4D3;margin-bottom:7px;opacity:{{ m.opacity }};">
+                <div style="width:34px;height:34px;border-radius:10px;background:{{ m.color }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <sc-if value="{{ m.isDot }}"><span style="width:13px;height:13px;border-radius:50%;background:#fff;opacity:.9;"></span></sc-if>
+                  <sc-if value="{{ m.isRing }}"><span style="width:17px;height:17px;border-radius:50%;border:2.5px solid #fff;opacity:.9;"></span></sc-if>
+                  <sc-if value="{{ m.isBars }}"><div style="display:flex;flex-direction:column;align-items:center;gap:1.5px;"><span style="width:10px;height:10px;border-radius:50%;background:#fff;"></span><span style="width:18px;height:4px;border-radius:2px;background:#fff;opacity:.85;"></span></div></sc-if>
+                  <sc-if value="{{ m.isFoot }}"><div style="position:relative;width:18px;height:18px;"><span style="position:absolute;top:0;left:1px;width:9px;height:12px;border-radius:60%;background:#fff;opacity:.9;transform:rotate(-15deg);"></span><span style="position:absolute;bottom:0;right:0;width:9px;height:12px;border-radius:60%;background:#fff;opacity:.6;transform:rotate(15deg);"></span></div></sc-if>
+                  <sc-if value="{{ m.isSpeech }}"><div style="position:relative;width:20px;height:15px;"><span style="position:absolute;inset:0;border-radius:6px;background:#fff;opacity:.9;"></span><span style="position:absolute;bottom:-4px;left:5px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #fff;opacity:.9;"></span></div></sc-if>
+                  <sc-if value="{{ m.isSeat }}"><div style="position:relative;width:18px;height:18px;border-radius:6px;border:2.5px solid #fff;opacity:.9;box-sizing:border-box;"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;border:1.5px solid #fff;"></span></div></sc-if>
+                </div>
+                <span style="font-size:13.5px;color:#5B4632;">{{ m.label }}{{ m.doneSuffix }}</span>
+                <span style="margin-left:auto;font-size:11px;color:#B5A288;">{{ m.range }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <p style="text-align:center;font-size:11px;color:#B5A288;line-height:1.8;margin-top:22px;">薄い色の日は一般的な発達の目安時期です。発達には個人差がありますので、気になることがあれば自治体の健診等でご相談ください。</p>
+
+      <button onClick="{{ openNewRecord }}" style="position:fixed;right:20px;bottom:26px;width:56px;height:56px;border-radius:50%;background:#D0794F;color:#fff;font-size:28px;border:none;box-shadow:0 8px 20px rgba(208,121,79,.45);cursor:pointer;z-index:20;">＋</button>
+    </sc-if>
+
+    <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#5B4632;color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:60;animation:toastfade .25s ease;">{{ toastMsg }}</div>
+    </sc-if>
+
+    <sc-if value="{{ editProfileOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeEditProfile }}" style="position:fixed;inset:0;background:rgba(58,52,43,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;">
+        <div onClick="{{ stop }}" style="background:#FBF6EE;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:24px 22px 30px;box-sizing:border-box;">
+          <h2 style="font-family:'Zen Maru Gothic',sans-serif;font-size:19px;color:#5B4632;margin:0 0 16px;">生年月日を編集</h2>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">生年月日</label>
+            <input type="date" value="{{ editBirthdate }}" onChange="{{ onEditBirthdateChange }}" max="{{ todayStr }}" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;"/>
+          </div>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">お名前・ニックネーム（任意）</label>
+            <input type="text" value="{{ editName }}" onChange="{{ onEditNameChange }}" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;"/>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ closeEditProfile }}" style="flex:1;background:transparent;color:#9A8B72;border:1px solid #F0E4D3;border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">キャンセル</button>
+            <button onClick="{{ saveEditProfile }}" style="flex:1;background:#7A9471;color:#fff;border:none;border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">保存する</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ recordModalOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeRecordModal }}" style="position:fixed;inset:0;background:rgba(58,52,43,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;box-sizing:border-box;">
+        <div onClick="{{ stop }}" style="background:#FBF6EE;width:100%;max-width:480px;max-height:86vh;overflow-y:auto;border-radius:22px;padding:24px 22px 30px;box-sizing:border-box;box-shadow:0 20px 50px rgba(58,52,43,.35);">
+          <h2 style="font-family:'Zen Maru Gothic',sans-serif;font-size:19px;color:#5B4632;margin:0 0 16px;">{{ recordModalTitle }}</h2>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">できごと</label>
+            <select value="{{ recordMilestoneId }}" onChange="{{ onMilestoneSelectChange }}" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;">
+              <sc-for list="{{ milestoneOptions }}" as="opt" hint-placeholder-count="10">
+                <option value="{{ opt.id }}">{{ opt.label }}</option>
+              </sc-for>
+              <option value="__custom__">その他（自由入力）</option>
+            </select>
+          </div>
+          <sc-if value="{{ isCustomMilestone }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:14px;">
+              <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">できごとの名前</label>
+              <input type="text" value="{{ customTitle }}" onChange="{{ onCustomTitleChange }}" placeholder="例：はじめて笑った" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;"/>
+            </div>
+          </sc-if>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">日付</label>
+            <input type="date" value="{{ recordDate }}" onChange="{{ onRecordDateChange }}" max="{{ todayStr }}" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;"/>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">写真（任意）</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img data-role="record-photo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ycQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICTAEAOw==" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid #F0E4D3;visibility:{{ recordPhotoVisibility }};"/>
+              <input type="file" accept="image/*" onChange="{{ onPhotoChange }}"/>
+            </div>
+          </div>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12.5px;color:#9A8B72;margin-bottom:5px;">ひとことメモ（任意）</label>
+            <textarea value="{{ recordMemo }}" onChange="{{ onMemoChange }}" placeholder="そのときの様子など" style="width:100%;box-sizing:border-box;font-size:15px;background:#fff;border:1px solid #F0E4D3;border-radius:10px;padding:12px;min-height:56px;resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ closeRecordModal }}" style="flex:1;background:transparent;color:#9A8B72;border:1px solid #F0E4D3;border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">キャンセル</button>
+            <button onClick="{{ saveRecord }}" style="flex:1;background:#7A9471;color:#fff;border:none;border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">保存する</button>
+          </div>
+          <sc-if value="{{ isEditingRecord }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ deleteRecord }}" style="width:100%;margin-top:10px;background:#C4685C;color:#fff;border:none;border-radius:999px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">この記録を削除</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ lightboxOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;background:rgba(30,26,20,.9);z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;">
+        <button onClick="{{ closeLightbox }}" style="position:absolute;top:16px;right:18px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:20px;cursor:pointer;">✕</button>
+        <sc-if value="{{ lightboxHasMulti }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ lightboxPrev }}" style="position:absolute;top:50%;left:12px;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:22px;cursor:pointer;">‹</button>
+          <button onClick="{{ lightboxNext }}" style="position:absolute;top:50%;right:12px;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:22px;cursor:pointer;">›</button>
+        </sc-if>
+        <div style="max-width:560px;width:100%;text-align:center;">
+          <img data-role="lightbox-photo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ycQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICTAEAOw==" style="max-width:100%;max-height:66vh;object-fit:contain;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);"/>
+          <div style="color:#fff;margin-top:14px;">
+            <div style="font-family:'Zen Maru Gothic',sans-serif;font-size:19px;font-weight:700;">{{ lightboxTitle }}</div>
+            <div style="font-size:12px;opacity:.75;margin-top:2px;">{{ lightboxDate }}{{ lightboxCounter }}</div>
+            <sc-if value="{{ lightboxHasMemo }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;opacity:.9;margin-top:8px;line-height:1.6;">{{ lightboxMemo }}</div>
+            </sc-if>
+            <div style="margin-top:18px;">
+              <button onClick="{{ editFromLightbox }}" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;">この記録を編集</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const MILESTONES = [
+  {id:'neck', label:'首がすわる', min:3, max:4, color:'#7A9471', shape:'dot'},
+  {id:'roll', label:'寝返り', min:5, max:6, color:'#D0794F', shape:'ring'},
+  {id:'sit', label:'ひとりでお座り', min:6, max:8, color:'#C9A66B', shape:'bars'},
+  {id:'crawl', label:'はいはい', min:7, max:9, color:'#7A9471', shape:'foot'},
+  {id:'stand', label:'つかまり立ち', min:8, max:10, color:'#D0794F', shape:'bars'},
+  {id:'cruise', label:'伝い歩き', min:9, max:11, color:'#C9A66B', shape:'bars'},
+  {id:'word1', label:'はじめてのことば', min:10, max:13, color:'#C4685C', shape:'speech'},
+  {id:'walk', label:'ひとり歩き', min:12, max:15, color:'#7A9471', shape:'foot'},
+  {id:'word2', label:'二語文が出る', min:18, max:24, color:'#C4685C', shape:'speech'},
+  {id:'toilet', label:'トイレトレーニング開始', min:24, max:36, color:'#D0794F', shape:'seat'},
+];
+const WEEKDAYS = [
+  {label:'日', color:'#C4685C'}, {label:'月', color:'#9A8B72'}, {label:'火', color:'#9A8B72'},
+  {label:'水', color:'#9A8B72'}, {label:'木', color:'#9A8B72'}, {label:'金', color:'#9A8B72'}, {label:'土', color:'#6B8CAE'},
+];
+const STORE_KEY = 'sora-baby-growth-tracker';
+const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ycQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICTAEAOw==';
+
+function pad2(n){ return n<10 ? '0'+n : ''+n; }
+function toDateStr(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addMonths(date, n){ const d = new Date(date); d.setMonth(d.getMonth()+n); return d; }
+function fmtDate(dstr){ const d = new Date(dstr+'T00:00:00'); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; }
+function safeImg(v, fallback){ return (typeof v === 'string' && v) ? v : fallback; }
+
+class Component extends DCLogic {
+  state = {
+    loaded: false, birthdate: null, name: '', records: [],
+    viewYear: null, viewMonth: null,
+    setupBirthdate: '', setupName: '',
+    editProfileOpen: false, editBirthdate: '', editName: '',
+    recordModal: null, // {id, date, milestoneId, customTitle, memo, photo}
+    lightbox: null, // {date, idx}
+    toastMsg: '', toastVisible: false,
+  };
+
+  componentDidMount(){
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); }catch(e){}
+    const today = new Date();
+    this.setState({
+      loaded: true,
+      birthdate: saved && saved.birthdate || null,
+      name: saved && saved.name || '',
+      records: saved && saved.records || [],
+      viewYear: today.getFullYear(), viewMonth: today.getMonth(),
+      setupBirthdate: '', setupName: '',
+    }, ()=> this.syncImages());
+  }
+
+  persist(){
+    localStorage.setItem(STORE_KEY, JSON.stringify({birthdate:this.state.birthdate, name:this.state.name, records:this.state.records}));
+  }
+  componentDidUpdate(){ this.syncImages(); }
+  syncImages(){
+    const s = this.state;
+    const recordImg = document.querySelector('img[data-role="record-photo"]');
+    if(recordImg){
+      const v = safeImg(s.recordModal && s.recordModal.photo, BLANK_IMG);
+      if(recordImg.getAttribute('src') !== v) recordImg.src = v;
+    }
+    const lbImg = document.querySelector('img[data-role="lightbox-photo"]');
+    if(lbImg){
+      let v = BLANK_IMG;
+      if(s.lightbox){
+        const photos = this.lightboxPhotos();
+        const r = photos[s.lightbox.idx] || photos[0];
+        if(r) v = safeImg(r.photo, BLANK_IMG);
+      }
+      if(lbImg.getAttribute('src') !== v) lbImg.src = v;
+    }
+    document.querySelectorAll('img[data-role="cell-photo"]').forEach(img=>{
+      const dStr = img.getAttribute('data-date');
+      const rec = s.records.find(r=>r.date===dStr && r.photo);
+      const v = safeImg(rec && rec.photo, BLANK_IMG);
+      if(img.getAttribute('src') !== v) img.src = v;
+    });
+  }
+  showToast(msg){
+    this.setState({toastMsg:msg, toastVisible:true});
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(()=> this.setState({toastVisible:false}), 2200);
+  }
+  stop(e){ e.stopPropagation(); }
+
+  onSetupBirthdateChange(e){ this.setState({setupBirthdate: e.target.value}); }
+  onSetupNameChange(e){ this.setState({setupName: e.target.value}); }
+  confirmSetup(){
+    if(!this.state.setupBirthdate){ this.showToast('生年月日を入力してください'); return; }
+    this.setState({birthdate: this.state.setupBirthdate, name: this.state.setupName.trim()}, ()=> this.persist());
+  }
+
+  openEditProfile(){ this.setState({editProfileOpen:true, editBirthdate:this.state.birthdate, editName:this.state.name}); }
+  closeEditProfile(){ this.setState({editProfileOpen:false}); }
+  onEditBirthdateChange(e){ this.setState({editBirthdate:e.target.value}); }
+  onEditNameChange(e){ this.setState({editName:e.target.value}); }
+  saveEditProfile(){
+    if(!this.state.editBirthdate){ this.showToast('生年月日を入力してください'); return; }
+    this.setState({birthdate:this.state.editBirthdate, name:this.state.editName.trim(), editProfileOpen:false}, ()=> this.persist());
+  }
+
+  prevMonth(){ let m=this.state.viewMonth-1, y=this.state.viewYear; if(m<0){m=11;y--;} this.setState({viewMonth:m, viewYear:y}); }
+  nextMonth(){ let m=this.state.viewMonth+1, y=this.state.viewYear; if(m>11){m=0;y++;} this.setState({viewMonth:m, viewYear:y}); }
+  goToday(){ const t=new Date(); this.setState({viewYear:t.getFullYear(), viewMonth:t.getMonth()}); }
+
+  openNewRecord(){ this.openRecordModal(null, toDateStr(new Date())); }
+  getZoneMatchesForDate(dStr){
+    if(!this.state.birthdate) return [];
+    const birth = new Date(this.state.birthdate+'T00:00:00');
+    const cellDate = new Date(dStr+'T00:00:00');
+    const ranges = MILESTONES.map(mm=>({...mm, start: addMonths(birth, mm.min), end: addMonths(birth, mm.max)}));
+    const recordedDate = {};
+    this.state.records.forEach(r=>{ if(!r.milestoneId) return; const dd=new Date(r.date+'T00:00:00'); if(!recordedDate[r.milestoneId] || dd<recordedDate[r.milestoneId]) recordedDate[r.milestoneId]=dd; });
+    let zoneMatches = ranges.filter(mm=> cellDate>=stripTime(mm.start) && cellDate<=stripTime(mm.end));
+    zoneMatches = zoneMatches.filter(mm=>{ const rec=recordedDate[mm.id]; return !(rec && cellDate>=stripTime(rec)); });
+    return zoneMatches;
+  }
+  openRecordModal(existingId, presetDate){
+    const existing = existingId ? this.state.records.find(r=>r.id===existingId) : null;
+    let defaultMilestoneId = MILESTONES[0].id;
+    if(!existing){
+      const dStr = presetDate || toDateStr(new Date());
+      const zoneMatches = this.getZoneMatchesForDate(dStr);
+      if(zoneMatches.length>0) defaultMilestoneId = zoneMatches[0].id;
+    }
+    this.setState({recordModal: {
+      id: existing ? existing.id : null,
+      date: existing ? existing.date : (presetDate || toDateStr(new Date())),
+      milestoneId: existing ? (existing.milestoneId || '__custom__') : defaultMilestoneId,
+      customTitle: existing && !existing.milestoneId ? existing.title : '',
+      memo: existing ? (existing.memo || '') : '',
+      photo: existing ? (existing.photo || null) : null,
+    }});
+  }
+  closeRecordModal(){ this.setState({recordModal:null}); }
+  onMilestoneSelectChange(e){ this.setState(s=>({recordModal:{...s.recordModal, milestoneId:e.target.value}})); }
+  onCustomTitleChange(e){ this.setState(s=>({recordModal:{...s.recordModal, customTitle:e.target.value}})); }
+  onRecordDateChange(e){ this.setState(s=>({recordModal:{...s.recordModal, date:e.target.value}})); }
+  onMemoChange(e){ this.setState(s=>({recordModal:{...s.recordModal, memo:e.target.value}})); }
+  onPhotoChange(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height; const maxW=480;
+        if(w>maxW){ h=Math.round(h*(maxW/w)); w=maxW; }
+        const canvas = document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        this.setState(s=>({recordModal:{...s.recordModal, photo:dataUrl}}));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  saveRecord(){
+    const rm = this.state.recordModal;
+    if(!rm.date){ this.showToast('日付を入力してください'); return; }
+    const isCustom = rm.milestoneId === '__custom__';
+    let title, milestoneId;
+    if(isCustom){
+      title = (rm.customTitle||'').trim();
+      if(!title){ this.showToast('できごとの名前を入力してください'); return; }
+      milestoneId = null;
+    } else {
+      milestoneId = rm.milestoneId;
+      title = MILESTONES.find(m=>m.id===milestoneId).label;
+    }
+    let records = [...this.state.records];
+    if(rm.id){
+      records = records.map(r=> r.id===rm.id ? {...r, milestoneId, title, date:rm.date, memo:rm.memo, photo:rm.photo} : r);
+    } else {
+      records.push({id:'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), milestoneId, title, date:rm.date, memo:rm.memo, photo:rm.photo});
+    }
+    const d = new Date(rm.date+'T00:00:00');
+    this.setState({records, recordModal:null, viewYear:d.getFullYear(), viewMonth:d.getMonth()}, ()=>{ this.persist(); this.showToast('記録しました'); });
+  }
+  deleteRecord(){
+    const rm = this.state.recordModal;
+    const records = this.state.records.filter(r=>r.id!==rm.id);
+    this.setState({records, recordModal:null}, ()=>{ this.persist(); this.showToast('削除しました'); });
+  }
+
+  cellClick(dStr){
+    const recs = this.state.records.filter(r=>r.date===dStr);
+    const withPhoto = recs.filter(r=>r.photo);
+    if(withPhoto.length>0){ this.setState({lightbox:{date:dStr, idx:0}}); }
+    else if(recs.length>0){ this.openRecordModal(recs[0].id); }
+    else { this.openRecordModal(null, dStr); }
+  }
+  closeLightbox(){ this.setState({lightbox:null}); }
+  lightboxPhotos(){
+    if(!this.state.lightbox) return [];
+    return this.state.records.filter(r=>r.date===this.state.lightbox.date && r.photo);
+  }
+  lightboxPrev(){ const n=this.lightboxPhotos().length; this.setState(s=>({lightbox:{...s.lightbox, idx:(s.lightbox.idx-1+n)%n}})); }
+  lightboxNext(){ const n=this.lightboxPhotos().length; this.setState(s=>({lightbox:{...s.lightbox, idx:(s.lightbox.idx+1)%n}})); }
+  editFromLightbox(){
+    const photos = this.lightboxPhotos();
+    const r = photos[this.state.lightbox.idx];
+    this.setState({lightbox:null}, ()=> this.openRecordModal(r.id));
+  }
+
+  renderVals(){
+    const s = this.state;
+    const todayStr = toDateStr(new Date());
+    if(!s.loaded){
+      return {hasProfile:false, showSetup:false, todayStr, setupBirthdate:'', setupName:'', toastVisible:false, editProfileOpen:false, recordModalOpen:false, lightboxOpen:false};
+    }
+    const hasProfile = !!s.birthdate;
+    if(!hasProfile){
+      return {
+        hasProfile:false, showSetup:true, todayStr,
+        setupBirthdate: s.setupBirthdate, setupName: s.setupName,
+        onSetupBirthdateChange: e=>this.onSetupBirthdateChange(e),
+        onSetupNameChange: e=>this.onSetupNameChange(e),
+        confirmSetup: ()=>this.confirmSetup(),
+        toastVisible:false, editProfileOpen:false, recordModalOpen:false, lightboxOpen:false,
+      };
+    }
+
+    const birth = new Date(s.birthdate+'T00:00:00');
+    const now = new Date();
+    let y = now.getFullYear()-birth.getFullYear(), m = now.getMonth()-birth.getMonth(), d = now.getDate()-birth.getDate();
+    if(d<0){ m--; const pm = new Date(now.getFullYear(), now.getMonth(), 0); d+=pm.getDate(); }
+    if(m<0){ y--; m+=12; }
+    const curMonths = (now-birth)/(1000*60*60*24*30.4368);
+    const ageLabel = (y>0? y+'歳':'') + m + 'ヶ月' + d + '日';
+    const ageSubLabel = (s.name? s.name+'・':'') + fmtDate(s.birthdate) + '生まれ';
+
+    const ranges = MILESTONES.map(mm=>({...mm, start: addMonths(birth, mm.min), end: addMonths(birth, mm.max)}));
+    const recordedIds = new Set(s.records.filter(r=>r.milestoneId).map(r=>r.milestoneId));
+    const recordedDate = {};
+    s.records.forEach(r=>{ if(!r.milestoneId) return; const dd=new Date(r.date+'T00:00:00'); if(!recordedDate[r.milestoneId] || dd<recordedDate[r.milestoneId]) recordedDate[r.milestoneId]=dd; });
+
+    let upcoming = null;
+    for(const mm of MILESTONES){ if(recordedIds.has(mm.id)) continue; if(curMonths <= mm.max+1){ upcoming = mm; break; } }
+
+    const recordsByDate = {};
+    s.records.forEach(r=>{ (recordsByDate[r.date]=recordsByDate[r.date]||[]).push(r); });
+
+    const firstOfMonth = new Date(s.viewYear, s.viewMonth, 1);
+    const startDay = firstOfMonth.getDay();
+    const gridStart = new Date(s.viewYear, s.viewMonth, 1-startDay);
+    const calendarCells = [];
+    for(let i=0;i<42;i++){
+      const cellDate = new Date(gridStart); cellDate.setDate(gridStart.getDate()+i);
+      const dStr = toDateStr(cellDate);
+      const isOtherMonth = cellDate.getMonth()!==s.viewMonth;
+      const isToday = dStr===todayStr;
+      const dow = cellDate.getDay();
+      const dayRecords = recordsByDate[dStr] || [];
+      const photoRecord = dayRecords.find(r=>r.photo);
+      const hasPhoto = !!photoRecord;
+      let zoneMatches = ranges.filter(mm=> cellDate>=stripTime(mm.start) && cellDate<=stripTime(mm.end));
+      zoneMatches = zoneMatches.filter(mm=>{ const rec=recordedDate[mm.id]; return !(rec && cellDate>=stripTime(rec)); });
+      let dots = [];
+      if(dayRecords.length>0){
+        dots = dayRecords.slice(0,4).map(r=>{
+          const mm = r.milestoneId ? MILESTONES.find(x=>x.id===r.milestoneId) : null;
+          return {color: mm?mm.color:'#D0794F', shape: mm?mm.shape:'dot'};
+        });
+      } else if(zoneMatches.length>0){
+        dots = zoneMatches.slice(0,4).map(mm=>({color:mm.color, shape:mm.shape}));
+      }
+      dots = dots.map(dd=>({
+        color:dd.color, isDot:dd.shape==='dot', isRing:dd.shape==='ring', isBars:dd.shape==='bars',
+        isFoot:dd.shape==='foot', isSpeech:dd.shape==='speech', isSeat:dd.shape==='seat',
+      }));
+      calendarCells.push({
+        key: dStr, dayNum: cellDate.getDate(), hasPhoto,
+        photoSrc: hasPhoto ? safeImg(photoRecord.photo, BLANK_IMG) : BLANK_IMG,
+        photoDisplay: hasPhoto ? 'block' : 'none',
+        showNum: !hasPhoto, dots,
+        borderColor: hasPhoto ? '#D0794F' : '#F0E4D3',
+        todayShadow: isToday ? 'inset 0 0 0 2px #D0794F' : 'none',
+        opacity: isOtherMonth ? 0.32 : 1,
+        numColor: dow===0 ? '#C4685C' : (dow===6 ? '#6B8CAE' : '#5B4632'),
+        onClick: ()=>this.cellClick(dStr),
+      });
+    }
+
+    const monthStart = new Date(s.viewYear, s.viewMonth, 1);
+    const monthEnd = new Date(s.viewYear, s.viewMonth+1, 0);
+    const relevantRanges = ranges.filter(mm=> mm.start<=monthEnd && mm.end>=monthStart);
+    const relevantMilestones = relevantRanges.map(mm=>{
+      const done = recordedIds.has(mm.id);
+      return {
+        id:mm.id, label:mm.label, range:`${mm.min}〜${mm.max}ヶ月頃`, color:mm.color,
+        doneSuffix: done? '（記録ずみ）':'', opacity: done? 0.5:1,
+        isDot:mm.shape==='dot', isRing:mm.shape==='ring', isBars:mm.shape==='bars',
+        isFoot:mm.shape==='foot', isSpeech:mm.shape==='speech', isSeat:mm.shape==='seat',
+      };
+    });
+
+    const monthLabel = `${s.viewYear}年${s.viewMonth+1}月`;
+
+    const rm = s.recordModal;
+    const recordModalOpen = !!rm;
+    let recordModalVals = {};
+    if(recordModalOpen){
+      const isCustom = rm.milestoneId === '__custom__';
+      recordModalVals = {
+        recordModalTitle: rm.id ? 'できごとを編集' : 'できごとを記録する',
+        recordMilestoneId: rm.milestoneId, recordDate: rm.date, recordMemo: rm.memo,
+        isCustomMilestone: isCustom, customTitle: rm.customTitle,
+        hasRecordPhoto: !!rm.photo, recordPhoto: safeImg(rm.photo, BLANK_IMG),
+        recordPhotoVisibility: rm.photo ? 'visible' : 'hidden',
+        isEditingRecord: !!rm.id,
+        milestoneOptions: MILESTONES.map(mm=>({id:mm.id, label:mm.label})),
+        onMilestoneSelectChange: e=>this.onMilestoneSelectChange(e),
+        onCustomTitleChange: e=>this.onCustomTitleChange(e),
+        onRecordDateChange: e=>this.onRecordDateChange(e),
+        onMemoChange: e=>this.onMemoChange(e),
+        onPhotoChange: e=>this.onPhotoChange(e),
+        closeRecordModal: ()=>this.closeRecordModal(),
+        saveRecord: ()=>this.saveRecord(),
+        deleteRecord: ()=>this.deleteRecord(),
+      };
+    }
+
+    const lb = s.lightbox;
+    const lightboxOpen = !!lb;
+    let lightboxVals = {};
+    if(lightboxOpen){
+      const photos = this.lightboxPhotos();
+      const r = photos[lb.idx] || photos[0];
+      lightboxVals = {
+        lightboxPhoto: r ? safeImg(r.photo, BLANK_IMG) : BLANK_IMG, lightboxTitle: r ? r.title : '',
+        lightboxDate: r ? fmtDate(r.date) : '',
+        lightboxCounter: photos.length>1 ? `　(${lb.idx+1}/${photos.length})` : '',
+        lightboxHasMemo: !!(r && r.memo), lightboxMemo: r ? r.memo : '',
+        lightboxHasMulti: photos.length>1,
+        closeLightbox: ()=>this.closeLightbox(), lightboxPrev: ()=>this.lightboxPrev(), lightboxNext: ()=>this.lightboxNext(),
+        editFromLightbox: ()=>this.editFromLightbox(),
+      };
+    }
+
+    return {
+      hasProfile:true, showSetup:false, todayStr,
+      ageLabel, ageSubLabel,
+      hasUpcoming: !!upcoming,
+      upcomingLabel: upcoming?upcoming.label:'', upcomingRange: upcoming?`${upcoming.min}〜${upcoming.max}ヶ月`:'',
+      upcomingColor: upcoming?upcoming.color:'#ccc',
+      upcomingIsDot: upcoming&&upcoming.shape==='dot', upcomingIsRing: upcoming&&upcoming.shape==='ring',
+      upcomingIsBars: upcoming&&upcoming.shape==='bars', upcomingIsFoot: upcoming&&upcoming.shape==='foot',
+      upcomingIsSpeech: upcoming&&upcoming.shape==='speech', upcomingIsSeat: upcoming&&upcoming.shape==='seat',
+      weekdays: WEEKDAYS, monthLabel, calendarCells,
+      hasRelevantMilestones: relevantMilestones.length>0, relevantMilestones,
+      prevMonth: ()=>this.prevMonth(), nextMonth: ()=>this.nextMonth(), goToday: ()=>this.goToday(),
+      openEditProfile: ()=>this.openEditProfile(), openNewRecord: ()=>this.openNewRecord(),
+      toastVisible: s.toastVisible, toastMsg: s.toastMsg,
+      editProfileOpen: s.editProfileOpen, editBirthdate: s.editBirthdate, editName: s.editName,
+      onEditBirthdateChange: e=>this.onEditBirthdateChange(e), onEditNameChange: e=>this.onEditNameChange(e),
+      closeEditProfile: ()=>this.closeEditProfile(), saveEditProfile: ()=>this.saveEditProfile(),
+      stop: e=>this.stop(e),
+      recordModalOpen, ...recordModalVals,
+      lightboxOpen, ...lightboxVals,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
