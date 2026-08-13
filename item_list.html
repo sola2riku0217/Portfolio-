@@ -13,6 +13,7 @@
     --accent-soft: #fff0ee;
     --text: #4a4340;
     --text-light: #9a908c;
+    --text-faint: #c4b8b3;
     --border: #f0e2db;
     --danger: #e57373;
     --shadow: 0 1px 3px rgba(120, 90, 80, 0.07);
@@ -26,7 +27,7 @@
     padding: 18px 16px 40px;
   }
   .container {
-    max-width: 1040px;
+    max-width: 1120px;
     margin: 0 auto;
   }
 
@@ -87,9 +88,7 @@
     color: var(--text);
     font-weight: 600;
   }
-  .summary .meta .purchased-line {
-    color: var(--accent-dark);
-  }
+  .summary .meta .purchased-line,
   .summary .meta .purchased-line b { color: var(--accent-dark); }
   .export-btn {
     background: none;
@@ -130,9 +129,7 @@
     background: #fff;
     min-width: 0;
   }
-  .add-form input:focus {
-    border-color: var(--accent);
-  }
+  .add-form input:focus { border-color: var(--accent); }
   .add-form .f-name  { flex: 2 1 160px; }
   .add-form .f-price { flex: 0 1 120px; }
   .add-form .f-url   { flex: 3 1 200px; }
@@ -157,19 +154,20 @@
   /* ---- list ---- */
   .list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
     gap: 10px;
+    align-items: start;
   }
   .item {
     position: relative;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 11px 12px 10px 40px;
+    padding: 11px 12px 11px 36px;
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     transition: opacity 0.15s, background 0.15s;
   }
   .item.purchased {
@@ -178,10 +176,10 @@
   }
   .item .check {
     position: absolute;
-    top: 11px;
-    left: 10px;
-    width: 18px;
-    height: 18px;
+    top: 12px;
+    left: 11px;
+    width: 17px;
+    height: 17px;
     margin: 0;
     accent-color: var(--accent-dark);
     cursor: pointer;
@@ -198,6 +196,81 @@
     text-decoration: line-through;
     color: var(--text-light);
   }
+  .price-main {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent-dark);
+    line-height: 1.15;
+  }
+  .price-main.no-price {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-faint);
+  }
+
+  /* ---- candidates ---- */
+  .cands {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 3px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+  }
+  .cand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    padding: 1px 0;
+  }
+  .cand-radio {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    flex: 0 0 auto;
+    accent-color: var(--accent-dark);
+    cursor: pointer;
+  }
+  .cand-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-light);
+  }
+  .cand-price {
+    white-space: nowrap;
+    color: var(--text-light);
+  }
+  .cand.is-selected .cand-name,
+  .cand.is-selected .cand-price {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .cand.is-selected .cand-price { color: var(--accent-dark); }
+  .cand-url {
+    flex: 0 0 auto;
+    color: var(--accent-dark);
+    text-decoration: none;
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .cand-url:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .cands .no-cand {
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+
+  /* ---- editing ---- */
   .edit-input {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -215,50 +288,44 @@
     font-size: 13px;
     padding-right: 26px;
   }
-  .price-field {
-    display: flex;
-    align-items: center;
-    gap: 2px;
+  .cand.editing {
+    align-items: flex-start;
+    gap: 5px;
+    padding: 6px 0;
     border-bottom: 1px dashed var(--border);
-    padding-bottom: 1px;
-    max-width: 130px;
   }
-  .price-field .yen {
-    font-size: 13px;
-    color: var(--text-light);
-    flex: 0 0 auto;
-  }
-  .price-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--accent-dark);
-    padding: 1px 0;
-    width: 100%;
+  .cand.editing .cand-radio { margin-top: 7px; }
+  .cand-fields {
+    flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .price-input::placeholder {
-    color: #cfc4bf;
-    font-weight: 400;
-  }
-  .price-field:focus-within {
-    border-bottom-color: var(--accent);
-  }
-  .item a.url {
-    color: var(--accent-dark);
+  .cand-fields .edit-input {
     font-size: 11.5px;
-    text-decoration: none;
-    line-height: 1.3;
-    word-break: break-all;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    padding: 4px 6px;
   }
-  .item a.url:hover { text-decoration: underline; }
+  .cand-del { margin-top: 3px; }
+  .add-cand-btn {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-light);
+    border-radius: 8px;
+    padding: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+    margin-top: 4px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-cand-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+  }
+
+  /* ---- buttons ---- */
   .item .actions {
     position: absolute;
     top: 5px;
@@ -269,7 +336,7 @@
   .icon-btn {
     background: none;
     border: none;
-    color: #cfc4bf;
+    color: var(--text-faint);
     cursor: pointer;
     font-size: 13px;
     width: 22px;
@@ -280,6 +347,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 auto;
     transition: color 0.15s, background 0.15s;
   }
   .edit-btn:hover, .done-btn {
@@ -287,7 +355,7 @@
     background: var(--accent-soft);
   }
   .done-btn:hover { background: var(--accent); color: #fff; }
-  .delete-btn:hover {
+  .delete-btn:hover, .cand-del:hover {
     color: var(--danger);
     background: #fdecea;
   }
@@ -303,7 +371,7 @@
     .add-form .f-name  { flex: 1 1 100%; }
     .add-form .f-price { flex: 1 1 90px; }
     .add-form .f-url   { flex: 3 1 120px; }
-    .list { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .list { grid-template-columns: 1fr; }
     .summary { padding: 12px 16px; gap: 6px 12px; }
     .summary .total { flex: 1 1 100%; }
     .summary .meta { flex: 1 1 100%; white-space: normal; align-items: flex-start; }
@@ -343,16 +411,40 @@ const STORAGE_KEY = 'baby-prep-list';
 const defaultItems = [
   'おむつ', 'ベビーベッド', '抱っこ紐', '粉ミルク', 'ベビーカー',
   'チャイルドシート', '哺乳瓶', 'ベビーバス', '肌着・ベビー服', 'おしりふき',
-].map(name => ({ name, price: null, url: '', purchased: false }));
+].map(name => ({ name, candidates: [], purchased: false }));
+
+function toPrice(value) {
+  const num = Number(value);
+  return Number.isFinite(num) && value !== null && value !== '' ? Math.max(0, num) : null;
+}
+
+function normalizeCandidate(cand) {
+  return {
+    id: cand.id || crypto.randomUUID(),
+    name: String(cand.name || ''),
+    price: toPrice(cand.price),
+    url: String(cand.url || ''),
+  };
+}
 
 function normalizeItem(item) {
-  const price = Number(item.price);
+  let candidates;
+  if (Array.isArray(item.candidates)) {
+    candidates = item.candidates.map(normalizeCandidate);
+  } else if (toPrice(item.price) !== null || item.url) {
+    // 旧形式（金額・URL がアイテム直下）を候補1件として引き継ぐ
+    candidates = [normalizeCandidate({ name: '', price: item.price, url: item.url })];
+  } else {
+    candidates = [];
+  }
+
+  const hasSelected = candidates.some(c => c.id === item.selectedId);
   return {
     id: item.id || crypto.randomUUID(),
     name: String(item.name || ''),
-    price: Number.isFinite(price) && item.price !== null && item.price !== '' ? price : null,
-    url: String(item.url || ''),
     purchased: Boolean(item.purchased),
+    candidates,
+    selectedId: hasSelected ? item.selectedId : (candidates[0] ? candidates[0].id : null),
   };
 }
 
@@ -362,7 +454,7 @@ function loadItems() {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed.map(normalizeItem);
-    } catch (e) { /* fall through to defaults */ }
+    } catch (e) { /* 壊れていたら初期データで作り直す */ }
   }
   const initial = defaultItems.map(normalizeItem);
   saveItems(initial);
@@ -376,23 +468,32 @@ function saveItems(list) {
 let items = loadItems();
 let editingId = null;
 let nameBeforeEdit = '';
+let focusCandidateId = null;
 
 function formatYen(n) {
   return '¥' + n.toLocaleString('ja-JP');
 }
 
 function normalizeUrl(url) {
-  if (!url) return '';
   return /^https?:\/\//i.test(url) ? url : 'https://' + url;
 }
 
+/** 第1候補（未選択なら null） */
+function selectedCandidate(item) {
+  return item.candidates.find(c => c.id === item.selectedId) || null;
+}
+
+/** 第1候補の金額。候補なし・金額未入力なら null */
+function selectedPrice(item) {
+  const cand = selectedCandidate(item);
+  return cand ? cand.price : null;
+}
+
 function updateSummary() {
-  const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
-  const purchasedTotal = items
-    .filter(item => item.purchased)
-    .reduce((sum, item) => sum + (item.price || 0), 0);
-  const purchasedCount = items.filter(item => item.purchased).length;
-  const unset = items.filter(item => item.price === null).length;
+  const total = items.reduce((sum, item) => sum + (selectedPrice(item) || 0), 0);
+  const purchased = items.filter(item => item.purchased);
+  const purchasedTotal = purchased.reduce((sum, item) => sum + (selectedPrice(item) || 0), 0);
+  const unset = items.filter(item => selectedPrice(item) === null).length;
 
   document.getElementById('total-amount').textContent = formatYen(total);
 
@@ -406,9 +507,148 @@ function updateSummary() {
 
   const purchasedLine = document.createElement('span');
   purchasedLine.className = 'purchased-line';
-  purchasedLine.innerHTML = '購入済み <b>' + purchasedCount + '</b> 件 ・ '
+  purchasedLine.innerHTML = '購入済み <b>' + purchased.length + '</b> 件 ・ '
     + formatYen(purchasedTotal) + '　残り ' + formatYen(total - purchasedTotal);
   meta.appendChild(purchasedLine);
+}
+
+/** 金額欄：未フォーカス時は桁区切り、編集中は素の数値 */
+function attachPriceBehavior(input, getPrice, setPrice) {
+  input.value = getPrice() === null ? '' : getPrice().toLocaleString('ja-JP');
+  input.addEventListener('input', () => {
+    const digits = input.value.replace(/[^\d]/g, '');
+    setPrice(digits === '' ? null : Number(digits));
+  });
+  input.addEventListener('focus', () => {
+    input.value = getPrice() === null ? '' : String(getPrice());
+  });
+  input.addEventListener('blur', () => {
+    input.value = getPrice() === null ? '' : getPrice().toLocaleString('ja-JP');
+  });
+}
+
+function buildCandidateRow(item, cand, isEditing) {
+  const row = document.createElement('div');
+  row.className = 'cand' + (isEditing ? ' editing' : '')
+    + (cand.id === item.selectedId ? ' is-selected' : '');
+
+  const radio = document.createElement('input');
+  radio.className = 'cand-radio';
+  radio.type = 'radio';
+  radio.name = 'sel-' + item.id;
+  radio.checked = cand.id === item.selectedId;
+  radio.title = '第1候補にする';
+  radio.setAttribute('aria-label', (cand.name || '候補') + ' を第1候補にする');
+  radio.addEventListener('change', () => {
+    item.selectedId = cand.id;
+    saveItems(items);
+    render();
+  });
+  row.appendChild(radio);
+
+  if (!isEditing) {
+    const name = document.createElement('span');
+    name.className = 'cand-name';
+    name.textContent = cand.name || '(名称未設定)';
+    name.title = cand.name || '(名称未設定)';
+    row.appendChild(name);
+
+    const price = document.createElement('span');
+    price.className = 'cand-price';
+    price.textContent = cand.price === null ? '—' : formatYen(cand.price);
+    row.appendChild(price);
+
+    if (cand.url) {
+      const link = document.createElement('a');
+      link.className = 'cand-url';
+      link.href = normalizeUrl(cand.url);
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'URL';
+      link.title = cand.url;
+      row.appendChild(link);
+    }
+    return row;
+  }
+
+  const fields = document.createElement('div');
+  fields.className = 'cand-fields';
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'edit-input';
+  nameInput.type = 'text';
+  nameInput.placeholder = '製品名';
+  nameInput.value = cand.name;
+  nameInput.dataset.candName = cand.id;
+  nameInput.setAttribute('aria-label', '製品名');
+  nameInput.addEventListener('input', () => {
+    cand.name = nameInput.value;
+    saveItems(items);
+  });
+  nameInput.addEventListener('keydown', onEditKeydown);
+  fields.appendChild(nameInput);
+
+  const priceInput = document.createElement('input');
+  priceInput.className = 'edit-input';
+  priceInput.type = 'text';
+  priceInput.inputMode = 'numeric';
+  priceInput.placeholder = '金額';
+  priceInput.setAttribute('aria-label', '金額');
+  attachPriceBehavior(priceInput, () => cand.price, (value) => {
+    cand.price = value;
+    saveItems(items);
+    updateSummary();
+    updatePriceMain(item);
+  });
+  priceInput.addEventListener('keydown', onEditKeydown);
+  fields.appendChild(priceInput);
+
+  const urlInput = document.createElement('input');
+  urlInput.className = 'edit-input';
+  urlInput.type = 'text';
+  urlInput.inputMode = 'url';
+  urlInput.placeholder = 'URL（任意）';
+  urlInput.value = cand.url;
+  urlInput.setAttribute('aria-label', 'URL');
+  urlInput.addEventListener('input', () => {
+    cand.url = urlInput.value.trim();
+    saveItems(items);
+  });
+  urlInput.addEventListener('keydown', onEditKeydown);
+  fields.appendChild(urlInput);
+
+  row.appendChild(fields);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'icon-btn cand-del';
+  delBtn.type = 'button';
+  delBtn.title = 'この候補を削除';
+  delBtn.setAttribute('aria-label', 'この候補を削除');
+  delBtn.textContent = '✕';
+  delBtn.addEventListener('click', () => {
+    item.candidates = item.candidates.filter(c => c.id !== cand.id);
+    if (item.selectedId === cand.id) {
+      item.selectedId = item.candidates[0] ? item.candidates[0].id : null;
+    }
+    saveItems(items);
+    render();
+  });
+  row.appendChild(delBtn);
+
+  return row;
+}
+
+/** 第1候補の金額表示だけを差し替える（入力中の再描画を避けるため） */
+function updatePriceMain(item) {
+  const el = document.querySelector('[data-price-main="' + item.id + '"]');
+  if (!el) return;
+  const price = selectedPrice(item);
+  el.textContent = price === null ? '金額未入力' : formatYen(price);
+  el.className = 'price-main' + (price === null ? ' no-price' : '');
+}
+
+function onEditKeydown(e) {
+  if (e.key === 'Enter') finishEditing();
 }
 
 function render() {
@@ -445,9 +685,7 @@ function render() {
         item.name = nameInput.value;
         saveItems(items);
       });
-      nameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') finishEditing();
-      });
+      nameInput.addEventListener('keydown', onEditKeydown);
       card.appendChild(nameInput);
     } else {
       const name = document.createElement('p');
@@ -456,62 +694,36 @@ function render() {
       card.appendChild(name);
     }
 
-    const priceField = document.createElement('div');
-    priceField.className = 'price-field';
-
-    const yen = document.createElement('span');
-    yen.className = 'yen';
-    yen.textContent = '¥';
-    priceField.appendChild(yen);
-
-    const priceInput = document.createElement('input');
-    priceInput.className = 'price-input';
-    priceInput.type = 'text';
-    priceInput.inputMode = 'numeric';
-    priceInput.placeholder = '—';
-    priceInput.setAttribute('aria-label', item.name + ' の金額');
-    // 未フォーカス時は桁区切り表示、編集中は生の数値にする
-    priceInput.value = item.price === null ? '' : item.price.toLocaleString('ja-JP');
-    priceInput.addEventListener('input', () => {
-      const digits = priceInput.value.replace(/[^\d]/g, '');
-      item.price = digits === '' ? null : Number(digits);
-      saveItems(items);
-      updateSummary();
-    });
-    priceInput.addEventListener('focus', () => {
-      priceInput.value = item.price === null ? '' : String(item.price);
-    });
-    priceInput.addEventListener('blur', () => {
-      priceInput.value = item.price === null ? '' : item.price.toLocaleString('ja-JP');
-    });
-    priceField.appendChild(priceInput);
-    card.appendChild(priceField);
-
-    if (isEditing) {
-      const urlInput = document.createElement('input');
-      urlInput.className = 'edit-input url-input';
-      urlInput.type = 'text';
-      urlInput.inputMode = 'url';
-      urlInput.placeholder = 'URL（任意）';
-      urlInput.value = item.url;
-      urlInput.setAttribute('aria-label', 'URL');
-      urlInput.addEventListener('input', () => {
-        item.url = urlInput.value.trim();
-        saveItems(items);
-      });
-      urlInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') finishEditing();
-      });
-      card.appendChild(urlInput);
-    } else if (item.url) {
-      const link = document.createElement('a');
-      link.className = 'url';
-      link.href = normalizeUrl(item.url);
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = item.url.replace(/^https?:\/\//i, '');
-      card.appendChild(link);
+    // 候補が1件もないカードは金額行を出さず「候補なし」だけにする
+    if (item.candidates.length > 0) {
+      const price = selectedPrice(item);
+      const priceMain = document.createElement('div');
+      priceMain.className = 'price-main' + (price === null ? ' no-price' : '');
+      priceMain.dataset.priceMain = item.id;
+      priceMain.textContent = price === null ? '金額未入力' : formatYen(price);
+      card.appendChild(priceMain);
     }
+
+    const cands = document.createElement('div');
+    cands.className = 'cands';
+    if (item.candidates.length === 0 && !isEditing) {
+      const none = document.createElement('span');
+      none.className = 'no-cand';
+      none.textContent = '候補なし';
+      cands.appendChild(none);
+    }
+    for (const cand of item.candidates) {
+      cands.appendChild(buildCandidateRow(item, cand, isEditing));
+    }
+
+    const addCandBtn = document.createElement('button');
+    addCandBtn.className = 'add-cand-btn';
+    addCandBtn.type = 'button';
+    addCandBtn.textContent = '＋ 候補を追加';
+    addCandBtn.addEventListener('click', () => addCandidate(item));
+    cands.appendChild(addCandBtn);
+
+    card.appendChild(cands);
 
     const actions = document.createElement('div');
     actions.className = 'actions';
@@ -553,13 +765,28 @@ function render() {
     list.appendChild(card);
 
     if (isEditing) {
-      const nameInput = card.querySelector('.name-input');
-      nameInput.focus();
-      nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+      const target = focusCandidateId
+        ? card.querySelector('[data-cand-name="' + focusCandidateId + '"]')
+        : card.querySelector('.name-input');
+      if (target) {
+        target.focus();
+        target.setSelectionRange(target.value.length, target.value.length);
+      }
+      focusCandidateId = null;
     }
   }
 
   updateSummary();
+}
+
+function addCandidate(item) {
+  const cand = normalizeCandidate({ name: '', price: '', url: '' });
+  item.candidates.push(cand);
+  if (!item.selectedId) item.selectedId = cand.id;
+  saveItems(items);
+  editingId = item.id;
+  focusCandidateId = cand.id;
+  render();
 }
 
 function startEditing(item) {
@@ -570,9 +797,16 @@ function startEditing(item) {
 
 function finishEditing() {
   const item = items.find(i => i.id === editingId);
-  // 名前が空のまま確定されたら元の名前に戻す
-  if (item && item.name.trim() === '') {
-    item.name = nameBeforeEdit;
+  if (item) {
+    // 名前が空のまま確定されたら元の名前に戻す
+    if (item.name.trim() === '') item.name = nameBeforeEdit;
+    // 中身が空のままの候補は残さない
+    item.candidates = item.candidates.filter(
+      c => c.name.trim() !== '' || c.price !== null || c.url !== ''
+    );
+    if (!item.candidates.some(c => c.id === item.selectedId)) {
+      item.selectedId = item.candidates[0] ? item.candidates[0].id : null;
+    }
     saveItems(items);
   }
   editingId = null;
@@ -588,11 +822,13 @@ document.getElementById('add-form').addEventListener('submit', (e) => {
   const name = nameInput.value.trim();
   if (!name) return;
 
-  items.push(normalizeItem({
-    name,
-    price: priceInput.value.trim(),
-    url: urlInput.value.trim(),
-  }));
+  const price = priceInput.value.trim();
+  const url = urlInput.value.trim();
+  const candidates = (price !== '' || url !== '')
+    ? [{ name: '', price, url }]
+    : [];
+
+  items.push(normalizeItem({ name, candidates }));
   saveItems(items);
   editingId = null;
   render();
@@ -609,19 +845,29 @@ function escapeCsvField(field) {
 }
 
 function exportCsv() {
-  const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
-  const rows = [
-    ['名前', '金額', 'URL', '購入済み'],
-    ...items.map(item => [
-      item.name,
-      item.price === null ? '' : item.price,
-      item.url,
-      item.purchased ? '済' : '',
-    ]),
-    ['合計', total, '', ''],
-  ];
-  const csvContent = rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
+  const total = items.reduce((sum, item) => sum + (selectedPrice(item) || 0), 0);
+  const rows = [['アイテム', '候補名', '金額', 'URL', '第1候補', '購入済み']];
 
+  for (const item of items) {
+    const purchasedMark = item.purchased ? '済' : '';
+    if (item.candidates.length === 0) {
+      rows.push([item.name, '', '', '', '', purchasedMark]);
+      continue;
+    }
+    for (const cand of item.candidates) {
+      rows.push([
+        item.name,
+        cand.name,
+        cand.price === null ? '' : cand.price,
+        cand.url,
+        cand.id === item.selectedId ? '★' : '',
+        purchasedMark,
+      ]);
+    }
+  }
+  rows.push(['合計', '', total, '', '', '']);
+
+  const csvContent = rows.map(row => row.map(escapeCsvField).join(',')).join('\r\n');
   const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
 
