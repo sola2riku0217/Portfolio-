@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ライフプランシミュレーター</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -181,9 +182,28 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   .panel, .chart-container { padding: 14px; border-radius: 14px; }
   h1 { font-size: 20px; }
 }
+
+/* === PDF出力（印刷）用 === */
+#pdfPrintArea { display: none; }
+@media print {
+  body.pdf-printing * { visibility: hidden; }
+  body.pdf-printing #pdfPrintArea, body.pdf-printing #pdfPrintArea * { visibility: visible; }
+  body.pdf-printing #pdfPrintArea { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+  .pdf-page { page-break-after: always; }
+  .pdf-table { page-break-inside: auto; }
+  .pdf-table tr { page-break-inside: avoid; }
+  .pdf-table thead { display: table-header-group; }
+}
+.pdf-h2 { font-size: 16px; margin: 0 0 10px; color: #4F7F67; }
+.pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 14px; }
+.pdf-table th, .pdf-table td { border: 1px solid #ddd; padding: 3px 6px; }
+.pdf-table thead th { background: #4F7F67; color: #fff; }
+.pdf-table-dense { font-size: 8.5px; }
+.pdf-table-dense th, .pdf-table-dense td { padding: 2px 3px; }
 </style>
 </head>
 <body>
+<div id="pdfPrintArea"></div>
 <div class="container">
 <h1>🌟 ライフプランシミュレーター（現在〜100歳）</h1>
 
@@ -206,6 +226,12 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <div class="metric"><div class="label">生涯支出合計（100歳まで）</div><div class="value" id="totalExpense">-</div></div>
   <div class="metric" id="finalMetric"><div class="label">100歳時点の全資産</div><div class="value" id="finalAsset">-</div></div>
   <div class="metric" id="bankMetric"><div class="label">初めて破綻する年齢</div><div class="value" id="bankruptAge">-</div></div>
+</div>
+<div class="mobile-result-block" style="margin:0 0 16px;">
+  <button type="button" onclick="exportToExcel()" style="background:#4F7F67;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(79,127,103,.3);">📊 Excelに出力（月々の支出・キャッシュフロー表・グラフ・負担率まとめ）</button>
+  <button type="button" onclick="exportToPdf()" style="background:#C9805E;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(201,128,94,.3);margin-left:8px;">📄 PDFに出力（印刷ダイアログから保存）</button>
+  <span id="excelExportStatus" style="margin-left:10px;font-size:12px;color:#999;"></span>
+  <div class="note" style="margin-top:4px;">※ 「負担率と貯蓄まとめ」シートは、生活費按分ツールを一度開いて入力した内容（ブラウザに保存された按分データ）を使用します</div>
 </div>
 <div id="purchaseInfo" class="mobile-result-block" style="background:#FDF3E0; color:#97690F; padding:10px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; border:1px solid #F0DBA8;"></div>
 
@@ -234,6 +260,11 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <div class="tier-row" style="font-weight:600;color:#999;"><span>年齢帯</span><span style="display:block;width:80px;text-align:center;">夫</span><span style="display:block;width:80px;text-align:center;">妻</span></div>
   <div id="salaryTiers"></div>
   <div class="note">※ 現在の年収とシナリオから、現在の年齢〜65歳の年収カーブを自動生成します（各欄は手動修正も可能）<br>※ 上記は額面年収。社保・税金は下部「社保・税金」率で別途控除。66歳以降の給与は0</div>
+  <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+    <label><strong>現在の月収（手取り・自動）</strong></label>
+    <span style="font-size:12px;color:#4F7F67;">夫 <strong id="salaryNetH" style="font-size:14px;">-</strong>万円／妻 <strong id="salaryNetW" style="font-size:14px;">-</strong>万円</span>
+  </div>
+  <div class="note">※ 「社保・税金 額面に対する率」を使って簡易的に手取りを算出した現在の月収（現在の年齢時点の年収ベース）</div>
 
   <h2>🍱 生活費</h2>
   <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>現在月額合計（自動）</strong></label><span id="livingTotalDisplay" style="color:#4F7F67;font-weight:700;font-size:14px;">-</span> 万円</div>
@@ -975,6 +1006,10 @@ function render(rows) {
   }
   const refSalH = husbandRefAge <= 65 ? getSalary(husbandRefAge, salaryTiers.h) : 0;
   const refSalW = wifeRefAge <= 65 ? getSalary(wifeRefAge, salaryTiers.w) : 0;
+  const hMonthlyNet = refSalH * (1 - taxR) / 12;
+  const wMonthlyNet = refSalW * (1 - taxR) / 12;
+  document.getElementById('salaryNetH').textContent = hMonthlyNet.toFixed(1);
+  document.getElementById('salaryNetW').textContent = wMonthlyNet.toFixed(1);
   const annualGross = refSalH + refSalW;
   const annualNet = annualGross * (1 - taxR);
   const ratioGross = annualGross > 0 ? annualLoan / annualGross : 0;
@@ -1424,6 +1459,544 @@ run();
     });
   });
 })();
+
+// ============================================================
+// === 📊 Excel出力（月々の支出／キャッシュフロー表／ライフプランのグラフ／負担率と貯蓄まとめ） ===
+// ============================================================
+const EXPENSE_SPLIT_KEY = 'shushiAnbunV1';
+
+// 子供1人あたりの教育費 生涯平均（月額・万円）。按分ツール（expense_split.html）の
+// computeAvgEduMonthly() と同一ロジック（本シミュレータ自身の入力値を使用）
+function edu_computeAvgMonthlyForExport() {
+  const presetKey = document.getElementById('eduPreset').value;
+  const eduEndAge = val('eduEndAge');
+  const childLessons = val('childLessons');
+  const childMedical = val('childMedical');
+  const nisaMonthly_ = val('nisaMonthly');
+  const nisaEndAge_ = val('nisaEndAge');
+  const nisaReturn_ = val('nisaReturn') / 100;
+  const allow1 = val('childAllow1');
+  const allow2 = val('childAllow2');
+  let nisaBal = 0, nisaDepTotal = 0, schoolCashTotal = 0, lessonsTotal = 0, medicalTotal = 0, allowanceTotal = 0;
+  const yearsToConsider = eduEndAge + 1;
+  for (let cAge = 0; cAge <= eduEndAge; cAge++) {
+    const fullEdu = getEduCost(cAge, presetKey, eduEndAge);
+    let nisaDep = 0, nisaWith = 0;
+    nisaBal = nisaBal * (1 + nisaReturn_);
+    if (cAge <= nisaEndAge_) { nisaDep = nisaMonthly_ * 12; nisaBal += nisaDep; }
+    if (cAge >= 18 && fullEdu > 0 && nisaBal > 0) { nisaWith = Math.min(fullEdu, nisaBal); nisaBal -= nisaWith; }
+    let allowance = 0;
+    if (cAge >= 0 && cAge <= 15) allowance = allow1 * 12;
+    else if (cAge <= 18) allowance = allow2 * 12;
+    nisaDepTotal += nisaDep;
+    schoolCashTotal += (fullEdu - nisaWith);
+    lessonsTotal += childLessons * 12;
+    medicalTotal += childMedical * 12;
+    allowanceTotal += allowance;
+  }
+  const totalCash = nisaDepTotal + schoolCashTotal + lessonsTotal + medicalTotal - allowanceTotal;
+  return Math.max(0, (totalCash / yearsToConsider) / 12);
+}
+
+// 生活費按分ツール（expense_split.html）に保存された入力値を読み、
+// そのツールの run() と同一ロジックで負担率・貯蓄額を再計算する
+function buildAllocationSummaryForExport() {
+  const childCount = children.length;
+  const housePrice_ = val('housePrice');
+  const downPayment_ = val('downPayment');
+  const loanTerm_ = val('loanTerm') || 35;
+  const loanAmount_ = Math.max(0, housePrice_ - downPayment_);
+  const rr = ((rateTiers && rateTiers[0]) || 1.5) / 100 / 12;
+  const nn = loanTerm_ * 12;
+  void (rr === 0 ? loanAmount_ / nn : loanAmount_ * rr / (1 - Math.pow(1 + rr, -nn))); // (按分ツール側の簡易ローン月額・参考計算、本体には未使用)
+  const simEduMonthly_ = edu_computeAvgMonthlyForExport() * childCount;
+
+  let exp = null;
+  try {
+    const raw2 = localStorage.getItem(EXPENSE_SPLIT_KEY);
+    if (raw2) exp = JSON.parse(raw2);
+  } catch (e) { /* ignore */ }
+  if (!exp || !exp.inputs) return null;
+  const ei = exp.inputs;
+  const ev = (id) => parseFloat(ei[id]) || 0;
+  const customIds = exp.customItems || [];
+
+  const hMon = ev('hMonthly'), wMon = ev('wMonthly');
+  const hBon = ev('hBonus'), wBon = ev('wBonus');
+  const hMonToLivM = ev('hMonToLiv'), wMonToLivM = ev('wMonToLiv');
+  const hMonToLoanM = ev('hMonToLoan'), wMonToLoanM = ev('wMonToLoan');
+  const hMonToHfixM = ev('hMonToHfix'), wMonToHfixM = ev('wMonToHfix');
+  const hMonToEduM = ev('hMonToEdu'), wMonToEduM = ev('wMonToEdu');
+  const hMonToNisaM = ev('hMonToNisa'), wMonToNisaM = ev('wMonToNisa');
+  const hMonToJointM = ev('hMonToJoint'), wMonToJointM = ev('wMonToJoint');
+  const childMonToLiv = ev('childMonToLiv'), childMonToLoan = ev('childMonToLoan');
+  const childMonToHfix = ev('childMonToHfix'), childMonToEdu = ev('childMonToEdu');
+  const childMonToNisa = ev('childMonToNisa'), childMonToJoint = ev('childMonToJoint');
+  const hBonToLiv = ev('hBonToLiv'), wBonToLiv = ev('wBonToLiv');
+  const hBonToLoan = ev('hBonToLoan'), wBonToLoan = ev('wBonToLoan');
+  const hBonToHfix = ev('hBonToHfix'), wBonToHfix = ev('wBonToHfix');
+  const hBonToEdu = ev('hBonToEdu'), wBonToEdu = ev('wBonToEdu');
+  const hBonToNisa = ev('hBonToNisa'), wBonToNisa = ev('wBonToNisa');
+  const hBonToJoint = ev('hBonToJoint'), wBonToJoint = ev('wBonToJoint');
+  const childAllowMonthly_ = ev('childAllowMonthly');
+
+  let customHMon = 0, customWMon = 0, customHBon = 0, customWBon = 0, customChildMon = 0;
+  const customRows = customIds.map(id => {
+    const name = ei['custom_name_' + id] || '(名称未設定)';
+    const hM = parseFloat(ei['custom_hMon_' + id]) || 0;
+    const wM = parseFloat(ei['custom_wMon_' + id]) || 0;
+    const hB = parseFloat(ei['custom_hBon_' + id]) || 0;
+    const wB = parseFloat(ei['custom_wBon_' + id]) || 0;
+    const cM = parseFloat(ei['custom_child_' + id]) || 0;
+    customHMon += hM; customWMon += wM; customHBon += hB; customWBon += wB; customChildMon += cM;
+    return { name, hYear: hM * 12 + hB, wYear: wM * 12 + wB };
+  });
+  const customHYear = customHMon * 12 + customHBon;
+  const customWYear = customWMon * 12 + customWBon;
+
+  const hMonOut = hMonToLivM + hMonToLoanM + hMonToHfixM + hMonToEduM + hMonToNisaM + hMonToJointM + customHMon;
+  const wMonOut = wMonToLivM + wMonToLoanM + wMonToHfixM + wMonToEduM + wMonToNisaM + wMonToJointM + customWMon;
+  const hMonSav = hMon - hMonOut, wMonSav = wMon - wMonOut;
+  const hBonOut = hBonToLiv + hBonToLoan + hBonToHfix + hBonToEdu + hBonToNisa + hBonToJoint + customHBon;
+  const wBonOut = wBonToLiv + wBonToLoan + wBonToHfix + wBonToEdu + wBonToNisa + wBonToJoint + customWBon;
+  const hBonSav = hBon - hBonOut, wBonSav = wBon - wBonOut;
+
+  const childToLivY = childMonToLiv * 12, childToLoanY = childMonToLoan * 12;
+  const childToHfixY = childMonToHfix * 12, childToEduY = childMonToEdu * 12;
+  const childToNisaY = childMonToNisa * 12, childToJointY = childMonToJoint * 12;
+
+  const livHTotal = hMonToLivM * 12 + hBonToLiv, livWTotal = wMonToLivM * 12 + wBonToLiv;
+  const loanHTotal = hMonToLoanM * 12 + hBonToLoan, loanWTotal = wMonToLoanM * 12 + wBonToLoan;
+  const hfixHTotal = hMonToHfixM * 12 + hBonToHfix, hfixWTotal = wMonToHfixM * 12 + wBonToHfix;
+  const eduHTotal = hMonToEduM * 12 + hBonToEdu, eduWTotal = wMonToEduM * 12 + wBonToEdu;
+  const nisaHTotal = hMonToNisaM * 12 + hBonToNisa, nisaWTotal = wMonToNisaM * 12 + wBonToNisa;
+  const jointHTotal = hMonToJointM * 12 + hBonToJoint, jointWTotal = wMonToJointM * 12 + wBonToJoint;
+
+  const hMonYear = hMon * 12, wMonYear = wMon * 12;
+  // 児童手当（世帯1本の手入力値）は各項目への直接拠出分を除いた残りを夫婦の収入比で按分（按分ツールと同一ロジック）
+  const hTotForRatio_ = hMonYear + hBon, wTotForRatio_ = wMonYear + wBon;
+  const totForRatio_ = hTotForRatio_ + wTotForRatio_;
+  const childAllowYear_ = childAllowMonthly_ * 12;
+  const childAllowOutY_ = childToLivY + childToLoanY + childToHfixY + childToEduY + childToNisaY + childToJointY + customChildMon * 12;
+  const childAllowLeftoverY_ = childAllowYear_ - childAllowOutY_;
+  const childAllowRatioH_ = totForRatio_ > 0 ? hTotForRatio_ / totForRatio_ : 0.5;
+  const hChildAllowYear = childAllowLeftoverY_ * childAllowRatioH_;
+  const wChildAllowYear = childAllowLeftoverY_ * (1 - childAllowRatioH_);
+  const hTotalYear = hMonYear + hBon + hChildAllowYear, wTotalYear = wMonYear + wBon + wChildAllowYear;
+  const hBurden = livHTotal + loanHTotal + hfixHTotal + eduHTotal + nisaHTotal + jointHTotal + customHYear;
+  const wBurden = livWTotal + loanWTotal + hfixWTotal + eduWTotal + nisaWTotal + jointWTotal + customWYear;
+  const hSavY = hMonSav * 12 + hBonSav + hChildAllowYear, wSavY = wMonSav * 12 + wBonSav + wChildAllowYear;
+  const hRatio = hTotalYear > 0 ? hBurden / hTotalYear : 0;
+  const wRatio = wTotalYear > 0 ? wBurden / wTotalYear : 0;
+  const totRatio = (hTotalYear + wTotalYear) > 0 ? (hBurden + wBurden) / (hTotalYear + wTotalYear) : 0;
+  const hSavRatio = hTotalYear > 0 ? hSavY / hTotalYear : 0;
+  const wSavRatio = wTotalYear > 0 ? wSavY / wTotalYear : 0;
+  const totSavRatio = (hTotalYear + wTotalYear) > 0 ? (hSavY + wSavY) / (hTotalYear + wTotalYear) : 0;
+
+  return {
+    hMonYear, wMonYear, hBon, wBon, hChildAllowYear, wChildAllowYear, hTotalYear, wTotalYear,
+    livHTotal, livWTotal, loanHTotal, loanWTotal, hfixHTotal, hfixWTotal,
+    eduHTotal, eduWTotal, nisaHTotal, nisaWTotal, jointHTotal, jointWTotal,
+    customHYear, customWYear, customRows,
+    hBurden, wBurden, hSavY, wSavY,
+    hRatio, wRatio, totRatio, hSavRatio, wSavRatio, totSavRatio,
+    simEduMonthly_
+  };
+}
+
+function fmtPctExcel_(p) { return (Math.round(p * 1000) / 10) + '%'; }
+function r1_(n) { return Math.round((n || 0) * 10) / 10; }
+
+async function exportToExcel() {
+  const statusEl = document.getElementById('excelExportStatus');
+  if (typeof ExcelJS === 'undefined') {
+    statusEl.textContent = '⚠️ Excel出力ライブラリの読み込みに失敗しました（インターネット接続をご確認ください）';
+    statusEl.style.color = '#C0524A';
+    return;
+  }
+  statusEl.textContent = '⏳ 作成中...';
+  statusEl.style.color = '#999';
+  try {
+    const rows = simulate();
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'ライフプランシミュレータ';
+    wb.created = new Date();
+
+    const HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F7F67' } };
+    const HEADER_FONT = { bold: true, color: { argb: 'FFFFFFFF' } };
+    function styleHeaderRow(row) {
+      row.eachCell(cell => {
+        cell.fill = HEADER_FILL;
+        cell.font = HEADER_FONT;
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+      row.height = 20;
+    }
+    function autoWidth(ws, widths) {
+      ws.columns.forEach((col, i) => { col.width = widths[i] || 14; });
+    }
+
+    // === 1) 月々の支出 ===
+    const wsM = wb.addWorksheet('月々の支出');
+    wsM.addRow(['項目', '金額（万円/月）', '備考']);
+    styleHeaderRow(wsM.getRow(1));
+    const r0 = rows[0];
+    const livItems = [
+      ['食費', val('liv_food')], ['外食', val('liv_eatout')], ['日用品・薬局', val('liv_daily')],
+      ['水道光熱・通信', val('liv_util')], ['インターネット代', val('liv_internet')], ['交通費', val('liv_transport')],
+      ['保険・サブスク', val('liv_subsc')], ['エンタメ・旅行', val('liv_enter')], ['衣料・美容', val('liv_cloth')], ['その他', val('liv_other')]
+    ];
+    livItems.forEach(([name, v_]) => wsM.addRow([name, r1_(v_), '生活費10項目']));
+    const livSum = livItems.reduce((s, x) => s + x[1], 0);
+    const subtotalRow = wsM.addRow(['生活費 小計', r1_(livSum), '10項目合計']);
+    subtotalRow.font = { italic: true };
+    wsM.addRow(['夫お小遣い', r1_(val('husbandAllowance')), '']);
+    wsM.addRow(['妻お小遣い', r1_(val('wifeAllowance')), '']);
+    wsM.addRow(['生活費合計（お小遣い込み）', r1_(r0.living / 12), '今年のインフレ反映後の値']);
+    wsM.addRow(['住宅費（ローン月額）', r1_(r0.housingMonthly), '今年（初年度ベース）']);
+    wsM.addRow(['教育費：授業料（家計負担分）', r1_((r0.fullEduCost - r0.nisaWithdrawal) / 12), '子供NISAで充当した分を除く']);
+    wsM.addRow(['教育費：子供NISA積立', r1_(r0.nisaDeposit / 12), '']);
+    wsM.addRow(['教育費：習い事', r1_(r0.lessonCost / 12), '']);
+    wsM.addRow(['教育費：医療費', r1_(r0.medicalCost / 12), '']);
+    wsM.addRow(['保険料', r1_(val('insurance') / 12), '年額÷12']);
+    wsM.addRow(['臨時・追加費用', r1_(r0.customTotal / 12), '臨時支出項目（今年分）']);
+    wsM.addRow(['社保・税金', r1_(r0.tax / 12), '額面収入×税率']);
+    wsM.addRow(['一般NISA・投資 積立', r1_(val('invMonthly')), '資産運用への積立']);
+    wsM.addRow(['iDeCo 拠出', r1_(val('idecoMonthly')), '']);
+    const totalRow = wsM.addRow(['合計支出（生活関連）', r1_(r0.totalExpense / 12), '生活費+住宅+教育+保険+臨時+社税']);
+    totalRow.font = { bold: true };
+    const totalRow2 = wsM.addRow(['合計支出＋資産形成積立', r1_(r0.totalExpense / 12 + val('invMonthly') + val('idecoMonthly')), '上記＋一般NISA＋iDeCo']);
+    totalRow2.font = { bold: true };
+    wsM.addRow([]);
+    wsM.addRow(['参考：月収入（夫婦合計）', r1_(r0.totalIncome / 12), '']);
+    wsM.addRow(['参考：月次収支', r1_(r0.balance / 12), '収入-支出（年間値÷12）']);
+    autoWidth(wsM, [30, 18, 38]);
+    wsM.getColumn(2).numFmt = '#,##0.0';
+    wsM.views = [{ state: 'frozen', ySplit: 1 }];
+
+    // === 2) キャッシュフロー表 ===
+    const wsC = wb.addWorksheet('キャッシュフロー表');
+    const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く資産', '破綻'];
+    wsC.addRow(cfHeaders);
+    styleHeaderRow(wsC.getRow(1));
+    rows.forEach(r => {
+      const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
+      const row = wsC.addRow([
+        r.year, r.hAge, cAgeDisp,
+        Math.round(r.totalIncome), Math.round(r.living), Math.round(r.eduCost), Math.round(r.housing),
+        Math.round(r.ins), Math.round(r.customTotal), Math.round(r.tax), Math.round(r.totalExpense),
+        Math.round(r.balance), Math.round(r.invBal), Math.round(r.idecoBal), Math.round(r.nisaBal),
+        Math.round(r.cash), Math.round(r.totalAsset), Math.round(r.totalAsset - r.idecoBal),
+        r.bankrupt ? '⚠️ 破綻' : ''
+      ]);
+      if (r.bankrupt) {
+        row.eachCell(c => { c.font = { color: { argb: 'FFC0524A' }, bold: true }; });
+      }
+    });
+    autoWidth(wsC, [8, 8, 10, 9, 8, 8, 8, 8, 8, 8, 9, 9, 11, 10, 12, 9, 9, 13, 9]);
+    wsC.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
+
+    // === 3) ライフプランのグラフ ===
+    const wsG = wb.addWorksheet('ライフプランのグラフ');
+    wsG.getCell('A1').value = '📈 資産推移（現預金・投資・iDeCo・子供NISA・全資産）';
+    wsG.getCell('A1').font = { bold: true, size: 13 };
+    let cursor = 2;
+    try {
+      const assetCanvas = document.getElementById('assetChart');
+      const assetDataUrl = assetCanvas.toDataURL('image/png');
+      const imgW = assetCanvas.width, imgH = assetCanvas.height;
+      const scale = Math.min(1, 900 / imgW);
+      const imgId1 = wb.addImage({ base64: assetDataUrl, extension: 'png' });
+      wsG.addImage(imgId1, { tl: { col: 0, row: cursor }, ext: { width: imgW * scale, height: imgH * scale } });
+      cursor += Math.ceil((imgH * scale) / 20) + 2;
+    } catch (e) { /* canvas未描画等は無視 */ }
+    wsG.getCell('A' + cursor).value = '📊 年間収入・支出（合計・重畳）';
+    wsG.getCell('A' + cursor).font = { bold: true, size: 13 };
+    cursor += 1;
+    try {
+      const ieCanvas = document.getElementById('incomeExpenseChart');
+      const ieDataUrl = ieCanvas.toDataURL('image/png');
+      const imgW2 = ieCanvas.width, imgH2 = ieCanvas.height;
+      const scale2 = Math.min(1, 900 / imgW2);
+      const imgId2 = wb.addImage({ base64: ieDataUrl, extension: 'png' });
+      wsG.addImage(imgId2, { tl: { col: 0, row: cursor }, ext: { width: imgW2 * scale2, height: imgH2 * scale2 } });
+      cursor += Math.ceil((imgH2 * scale2) / 20) + 2;
+    } catch (e) { /* ignore */ }
+    cursor += 1;
+    wsG.getCell('A' + cursor).value = '元データ（資産推移）';
+    wsG.getCell('A' + cursor).font = { bold: true };
+    cursor += 1;
+    const dataHeaderRowIdx = cursor;
+    wsG.getRow(dataHeaderRowIdx).values = ['西暦', '夫年齢', '現預金', '投資残高', 'iDeCo残高', '子供NISA残高', '全資産合計'];
+    styleHeaderRow(wsG.getRow(dataHeaderRowIdx));
+    rows.forEach((r, i) => {
+      wsG.getRow(dataHeaderRowIdx + 1 + i).values = [r.year, r.hAge, Math.round(r.cash), Math.round(r.invBal), Math.round(r.idecoBal), Math.round(r.nisaBal), Math.round(r.totalAsset)];
+    });
+    autoWidth(wsG, [10, 10, 12, 12, 12, 12, 12]);
+
+    // === 4) / 5) 負担率と貯蓄まとめ（年間・月次） ===
+    const alloc = buildAllocationSummaryForExport();
+    function buildAllocSheet(name, divisor, unitLabel) {
+      const ws = wb.addWorksheet(name);
+      ws.addRow(['', '夫', '妻', '合計']);
+      styleHeaderRow(ws.getRow(1));
+      if (!alloc) {
+        const w2 = ws.addRow(['⚠️ 生活費按分ツール（expense_split.html）に保存されたデータが見つかりません。先に按分ツールを開いて入力・保存してからやり直してください。']);
+        w2.font = { color: { argb: 'FFC0524A' } };
+        autoWidth(ws, [60, 14, 14, 14]);
+        return ws;
+      }
+      const d = divisor;
+      const addR = (label, h, w, bold) => {
+        const row = ws.addRow([label, r1_(h / d), r1_(w / d), r1_((h + w) / d)]);
+        if (bold) row.font = { bold: true };
+        return row;
+      };
+      addR('月手取り（' + unitLabel + '換算）', alloc.hMonYear, alloc.wMonYear);
+      addR('賞与手取り（' + unitLabel + '換算）', alloc.hBon, alloc.wBon);
+      addR('👶 児童手当（' + unitLabel + '換算）', alloc.hChildAllowYear, alloc.wChildAllowYear);
+      addR('手取り合計（' + unitLabel + '）', alloc.hTotalYear, alloc.wTotalYear, true);
+      addR('生活費負担', alloc.livHTotal, alloc.livWTotal);
+      addR('住宅ローン負担', alloc.loanHTotal, alloc.loanWTotal);
+      addR('住宅固定費 拠出', alloc.hfixHTotal, alloc.hfixWTotal, true);
+      addR('教育費負担', alloc.eduHTotal, alloc.eduWTotal);
+      addR('NISA 拠出', alloc.nisaHTotal, alloc.nisaWTotal, true);
+      addR('二人の貯金 拠出', alloc.jointHTotal, alloc.jointWTotal, true);
+      addR('追加支出 拠出', alloc.customHYear, alloc.customWYear, true);
+      addR('負担合計', alloc.hBurden, alloc.wBurden, true);
+      const savRow = addR('個人貯金（残額）', alloc.hSavY, alloc.wSavY, true);
+      savRow.eachCell(c => { c.font = { bold: true, color: { argb: 'FF38573A' } }; });
+      const ratioRow = ws.addRow(['負担率（負担÷手取り）', fmtPctExcel_(alloc.hRatio), fmtPctExcel_(alloc.wRatio), fmtPctExcel_(alloc.totRatio)]);
+      ratioRow.font = { bold: true };
+      const savRatioRow = ws.addRow(['貯蓄率（貯金÷手取り）', fmtPctExcel_(alloc.hSavRatio), fmtPctExcel_(alloc.wSavRatio), fmtPctExcel_(alloc.totSavRatio)]);
+      savRatioRow.font = { bold: true, color: { argb: 'FF38573A' } };
+      if (alloc.customRows && alloc.customRows.length) {
+        ws.addRow([]);
+        const ch = ws.addRow(['追加支出の内訳', '夫(' + unitLabel + ')', '妻(' + unitLabel + ')', '']);
+        styleHeaderRow(ch);
+        alloc.customRows.forEach(c => ws.addRow([c.name, r1_(c.hYear / d), r1_(c.wYear / d), '']));
+      }
+      autoWidth(ws, [28, 14, 14, 14]);
+      return ws;
+    }
+    buildAllocSheet('負担率と貯蓄まとめ（年間）', 1, '年');
+    buildAllocSheet('負担率と貯蓄まとめ（月次）', 12, '月');
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `ライフプラン_${dateStr}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+    statusEl.textContent = '✅ 出力しました';
+    statusEl.style.color = '#4F7F67';
+    setTimeout(() => { statusEl.textContent = ''; }, 4000);
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = '⚠️ 出力に失敗しました: ' + e.message;
+    statusEl.style.color = '#C0524A';
+  }
+}
+
+
+// ============================================================
+// === 📄 PDF出力（ブラウザの印刷機能を利用し「PDFに保存」） ===
+// 月々の支出／キャッシュフロー表／ライフプランのグラフ／負担率と貯蓄まとめ（年間・月次）
+// ============================================================
+function esc_(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildPdfHtml_() {
+  const rows = simulate();
+  const r0 = rows[0];
+  const todayStr = new Date().toLocaleDateString('ja-JP');
+
+  let html = '';
+  html += `<div class="pdf-page">
+    <h1 style="font-size:20px;margin:0 0 4px;">🌟 ライフプラン サマリー</h1>
+    <div style="font-size:11px;color:#777;margin-bottom:16px;">作成日: ${esc_(todayStr)}</div>
+  </div>`;
+
+  // === 1) 月々の支出 ===
+  const livItems = [
+    ['食費', val('liv_food')], ['外食', val('liv_eatout')], ['日用品・薬局', val('liv_daily')],
+    ['水道光熱・通信', val('liv_util')], ['インターネット代', val('liv_internet')], ['交通費', val('liv_transport')],
+    ['保険・サブスク', val('liv_subsc')], ['エンタメ・旅行', val('liv_enter')], ['衣料・美容', val('liv_cloth')], ['その他', val('liv_other')]
+  ];
+  const livSum = livItems.reduce((s, x) => s + x[1], 0);
+  let monthlyRowsHtml = livItems.map(([n, v]) => `<tr><td>${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">生活費10項目</td></tr>`).join('');
+  monthlyRowsHtml += `<tr style="font-style:italic;"><td>生活費 小計</td><td style="text-align:right;">${r1_(livSum)}</td><td style="color:#999;">10項目合計</td></tr>`;
+  monthlyRowsHtml += `<tr><td>夫お小遣い</td><td style="text-align:right;">${r1_(val('husbandAllowance'))}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>妻お小遣い</td><td style="text-align:right;">${r1_(val('wifeAllowance'))}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>生活費合計（お小遣い込み）</td><td style="text-align:right;">${r1_(r0.living / 12)}</td><td style="color:#999;">今年の値</td></tr>`;
+  monthlyRowsHtml += `<tr><td>住宅費（ローン月額）</td><td style="text-align:right;">${r1_(r0.housingMonthly)}</td><td style="color:#999;">今年（初年度ベース）</td></tr>`;
+  monthlyRowsHtml += `<tr><td>教育費：授業料（家計負担分）</td><td style="text-align:right;">${r1_((r0.fullEduCost - r0.nisaWithdrawal) / 12)}</td><td style="color:#999;">子供NISA充当分を除く</td></tr>`;
+  monthlyRowsHtml += `<tr><td>教育費：子供NISA積立</td><td style="text-align:right;">${r1_(r0.nisaDeposit / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>教育費：習い事</td><td style="text-align:right;">${r1_(r0.lessonCost / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>教育費：医療費</td><td style="text-align:right;">${r1_(r0.medicalCost / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>保険料</td><td style="text-align:right;">${r1_(val('insurance') / 12)}</td><td style="color:#999;">年額÷12</td></tr>`;
+  monthlyRowsHtml += `<tr><td>臨時・追加費用</td><td style="text-align:right;">${r1_(r0.customTotal / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>社保・税金</td><td style="text-align:right;">${r1_(r0.tax / 12)}</td><td style="color:#999;">額面収入×税率</td></tr>`;
+  monthlyRowsHtml += `<tr><td>一般NISA・投資 積立</td><td style="text-align:right;">${r1_(val('invMonthly'))}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>iDeCo 拠出</td><td style="text-align:right;">${r1_(val('idecoMonthly'))}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr style="font-weight:700;"><td>合計支出（生活関連）</td><td style="text-align:right;">${r1_(r0.totalExpense / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr style="font-weight:700;"><td>合計支出＋資産形成積立</td><td style="text-align:right;">${r1_(r0.totalExpense / 12 + val('invMonthly') + val('idecoMonthly'))}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>参考：月収入（夫婦合計）</td><td style="text-align:right;">${r1_(r0.totalIncome / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>参考：月次収支</td><td style="text-align:right;">${r1_(r0.balance / 12)}</td><td></td></tr>`;
+
+  html += `<div class="pdf-page">
+    <h2 class="pdf-h2">🍱 月々の支出（万円/月）</h2>
+    <table class="pdf-table">
+      <thead><tr><th style="text-align:left;">項目</th><th style="text-align:right;">金額</th><th style="text-align:left;">備考</th></tr></thead>
+      <tbody>${monthlyRowsHtml}</tbody>
+    </table>
+  </div>`;
+
+  // === 2) キャッシュフロー表 ===
+  const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く', '破綻'];
+  let cfRowsHtml = rows.map(r => {
+    const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
+    const bankClass = r.bankrupt ? ' style="color:#C0524A;font-weight:700;"' : '';
+    return `<tr${bankClass}><td>${r.year}</td><td>${r.hAge}</td><td>${esc_(cAgeDisp)}</td>` +
+      `<td>${Math.round(r.totalIncome)}</td><td>${Math.round(r.living)}</td><td>${Math.round(r.eduCost)}</td>` +
+      `<td>${Math.round(r.housing)}</td><td>${Math.round(r.ins)}</td><td>${Math.round(r.customTotal)}</td>` +
+      `<td>${Math.round(r.tax)}</td><td>${Math.round(r.totalExpense)}</td><td>${Math.round(r.balance)}</td>` +
+      `<td>${Math.round(r.invBal)}</td><td>${Math.round(r.idecoBal)}</td><td>${Math.round(r.nisaBal)}</td>` +
+      `<td>${Math.round(r.cash)}</td><td>${Math.round(r.totalAsset)}</td><td>${Math.round(r.totalAsset - r.idecoBal)}</td>` +
+      `<td>${r.bankrupt ? '⚠️' : ''}</td></tr>`;
+  }).join('');
+  html += `<div class="pdf-page">
+    <h2 class="pdf-h2">📋 キャッシュフロー表（現在〜100歳）</h2>
+    <table class="pdf-table pdf-table-dense">
+      <thead><tr>${cfHeaders.map(h => `<th>${esc_(h)}</th>`).join('')}</tr></thead>
+      <tbody>${cfRowsHtml}</tbody>
+    </table>
+  </div>`;
+
+  // === 3) ライフプランのグラフ ===
+  let chartsHtml = '';
+  try {
+    const assetCanvas = document.getElementById('assetChart');
+    if (assetCanvas && assetCanvas.width > 0 && assetCanvas.height > 0) {
+      chartsHtml += `<div style="margin-bottom:18px;"><div style="font-weight:700;margin-bottom:6px;">📈 資産推移（現預金・投資・iDeCo・子供NISA・全資産）</div><img src="${assetCanvas.toDataURL('image/png')}" width="${assetCanvas.width}" height="${assetCanvas.height}" style="width:100%;max-width:900px;height:auto;"></div>`;
+    } else {
+      chartsHtml += `<div style="margin-bottom:18px;color:#C0524A;">⚠️ 資産推移グラフを読み込めませんでした</div>`;
+    }
+  } catch (e) { console.error('資産推移グラフのPDF出力に失敗:', e); chartsHtml += `<div style="margin-bottom:18px;color:#C0524A;">⚠️ 資産推移グラフを読み込めませんでした</div>`; }
+  try {
+    const ieCanvas = document.getElementById('incomeExpenseChart');
+    if (ieCanvas && ieCanvas.width > 0 && ieCanvas.height > 0) {
+      chartsHtml += `<div><div style="font-weight:700;margin-bottom:6px;">📊 年間収入・支出（合計・重畳）</div><img src="${ieCanvas.toDataURL('image/png')}" width="${ieCanvas.width}" height="${ieCanvas.height}" style="width:100%;max-width:900px;height:auto;"></div>`;
+    } else {
+      chartsHtml += `<div style="color:#C0524A;">⚠️ 収入・支出グラフを読み込めませんでした</div>`;
+    }
+  } catch (e) { console.error('収入・支出グラフのPDF出力に失敗:', e); chartsHtml += `<div style="color:#C0524A;">⚠️ 収入・支出グラフを読み込めませんでした</div>`; }
+  html += `<div class="pdf-page">
+    <h2 class="pdf-h2">📈 ライフプランのグラフ</h2>
+    ${chartsHtml}
+  </div>`;
+
+  // === 4)/5) 負担率と貯蓄まとめ ===
+  const alloc = buildAllocationSummaryForExport();
+  function allocTableHtml(divisor, unitLabel) {
+    if (!alloc) {
+      return `<div style="color:#C0524A;">⚠️ 生活費按分ツール（expense_split.html）に保存されたデータが見つかりません。先に按分ツールを開いて入力・保存してからやり直してください。</div>`;
+    }
+    const d = divisor;
+    const rowsDef = [
+      ['月手取り（' + unitLabel + '換算）', alloc.hMonYear, alloc.wMonYear, false],
+      ['賞与手取り（' + unitLabel + '換算）', alloc.hBon, alloc.wBon, false],
+      ['👶 児童手当（' + unitLabel + '換算）', alloc.hChildAllowYear, alloc.wChildAllowYear, false],
+      ['手取り合計（' + unitLabel + '）', alloc.hTotalYear, alloc.wTotalYear, true],
+      ['生活費負担', alloc.livHTotal, alloc.livWTotal, false],
+      ['住宅ローン負担', alloc.loanHTotal, alloc.loanWTotal, false],
+      ['住宅固定費 拠出', alloc.hfixHTotal, alloc.hfixWTotal, true],
+      ['教育費負担', alloc.eduHTotal, alloc.eduWTotal, false],
+      ['NISA 拠出', alloc.nisaHTotal, alloc.nisaWTotal, true],
+      ['二人の貯金 拠出', alloc.jointHTotal, alloc.jointWTotal, true],
+      ['追加支出 拠出', alloc.customHYear, alloc.customWYear, true],
+      ['負担合計', alloc.hBurden, alloc.wBurden, true],
+      ['個人貯金（残額）', alloc.hSavY, alloc.wSavY, true],
+    ];
+    let body = rowsDef.map(([label, h, w, bold]) => {
+      const style = bold ? ' style="font-weight:700;"' : '';
+      return `<tr${style}><td>${esc_(label)}</td><td style="text-align:right;">${r1_(h / d)}</td><td style="text-align:right;">${r1_(w / d)}</td><td style="text-align:right;">${r1_((h + w) / d)}</td></tr>`;
+    }).join('');
+    body += `<tr style="font-weight:700;"><td>負担率（負担÷手取り）</td><td style="text-align:right;">${fmtPctExcel_(alloc.hRatio)}</td><td style="text-align:right;">${fmtPctExcel_(alloc.wRatio)}</td><td style="text-align:right;">${fmtPctExcel_(alloc.totRatio)}</td></tr>`;
+    body += `<tr style="font-weight:700;color:#38573A;"><td>貯蓄率（貯金÷手取り）</td><td style="text-align:right;">${fmtPctExcel_(alloc.hSavRatio)}</td><td style="text-align:right;">${fmtPctExcel_(alloc.wSavRatio)}</td><td style="text-align:right;">${fmtPctExcel_(alloc.totSavRatio)}</td></tr>`;
+    let extra = '';
+    if (alloc.customRows && alloc.customRows.length) {
+      extra = `<div style="margin-top:10px;font-weight:700;">追加支出の内訳（${unitLabel}）</div><table class="pdf-table"><thead><tr><th style="text-align:left;">項目</th><th>夫</th><th>妻</th></tr></thead><tbody>` +
+        alloc.customRows.map(c => `<tr><td>${esc_(c.name)}</td><td style="text-align:right;">${r1_(c.hYear / d)}</td><td style="text-align:right;">${r1_(c.wYear / d)}</td></tr>`).join('') +
+        `</tbody></table>`;
+    }
+    return `<table class="pdf-table"><thead><tr><th style="text-align:left;"></th><th>夫</th><th>妻</th><th>合計</th></tr></thead><tbody>${body}</tbody></table>${extra}`;
+  }
+  html += `<div class="pdf-page">
+    <h2 class="pdf-h2">📈 負担率と貯蓄まとめ（年間ベース）</h2>
+    ${allocTableHtml(1, '年')}
+  </div>`;
+  html += `<div class="pdf-page">
+    <h2 class="pdf-h2">📈 負担率と貯蓄まとめ（月次ベース）</h2>
+    ${allocTableHtml(12, '月')}
+  </div>`;
+
+  return html;
+}
+
+function exportToPdf() {
+  const statusEl = document.getElementById('excelExportStatus');
+  try {
+    const area = document.getElementById('pdfPrintArea');
+    area.innerHTML = buildPdfHtml_();
+    document.body.classList.add('pdf-printing');
+    const cleanup = () => {
+      document.body.classList.remove('pdf-printing');
+      area.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    // Safariなどafterprintが発火しない環境向けフォールバック
+    setTimeout(cleanup, 60000);
+
+    // グラフ画像（data URI）はDOMに挿入した直後だとデコードが完了しておらず、
+    // そのままwindow.print()すると画像が真っ白のまま印刷されることがあるため、
+    // 画像のデコード完了とレイアウト確定を待ってから印刷する
+    const imgs = Array.from(area.querySelectorAll('img'));
+    const waitForImage = (img) => {
+      if (img.complete && img.naturalWidth > 0) {
+        return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        img.addEventListener('load', () => {
+          (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(resolve);
+        }, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+      });
+    };
+    Promise.all(imgs.map(waitForImage)).then(() => {
+      // デコード後、レイアウト・ペイントが確定するまで数フレーム待ってから印刷
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.print();
+        });
+      });
+    });
+  } catch (e) {
+    console.error(e);
+    if (statusEl) {
+      statusEl.textContent = '⚠️ PDF出力に失敗しました: ' + e.message;
+      statusEl.style.color = '#C0524A';
+    }
+  }
+}
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
