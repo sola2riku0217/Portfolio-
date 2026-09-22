@@ -287,9 +287,27 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
   <div class="note">※ 物価上昇（インフレ）の想定率。生活費とお小遣いが毎年この率で増加します（参考：日銀の物価目標は2%、近年の長期平均は1〜1.5%程度）</div>
   <div class="field"><label>子独立後係数</label><input type="number" id="postChildRatio" value="0.8" step="0.05"></div>
   <div class="note">※ 末子が大学を卒業（独立）した後の生活費の倍率。0.8なら独立後は生活費が2割減る想定（食費・水道光熱費など子供分の減少を反映）。子供がいない場合は適用されません</div>
-  <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;"><label>夫のお小遣い（万/月）</label><input type="number" id="husbandAllowance" value="3" step="0.5"></div>
-  <div class="field"><label>妻のお小遣い（万/月）</label><input type="number" id="wifeAllowance" value="3" step="0.5"></div>
-  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは別計上（インフレ反映あり、子独立後の減額は非適用）</div>
+  <div class="field" style="border-top:1px dashed #ccc; padding-top:6px; margin-top:6px;background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>夫のお小遣い合計（自動）</strong></label><span id="husbandAllowTotalDisplay" style="color:#4F7F67;font-weight:700;font-size:14px;">-</span> 万円</div>
+  <details style="margin-top:6px;">
+    <summary style="cursor:pointer;font-size:12px;color:#4F7F67;padding:4px 0;font-weight:600;">📝 夫のお小遣い内訳</summary>
+    <div style="background:#F7F6F2;padding:8px;border-radius:8px;margin-top:4px;border:1px solid #eee;">
+      <div class="field"><label>昼食代・カフェ（万/月）</label><input type="number" id="hAllow_lunch" value="1.5" step="0.5"></div>
+      <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="hAllow_hobby" value="1" step="0.5"></div>
+      <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="hAllow_social" value="0.5" step="0.5"></div>
+      <div class="field"><label>その他（万/月）</label><input type="number" id="hAllow_other" value="0" step="0.5"></div>
+    </div>
+  </details>
+  <div class="field" style="margin-top:8px;background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>妻のお小遣い合計（自動）</strong></label><span id="wifeAllowTotalDisplay" style="color:#4F7F67;font-weight:700;font-size:14px;">-</span> 万円</div>
+  <details style="margin-top:6px;">
+    <summary style="cursor:pointer;font-size:12px;color:#4F7F67;padding:4px 0;font-weight:600;">📝 妻のお小遣い内訳</summary>
+    <div style="background:#F7F6F2;padding:8px;border-radius:8px;margin-top:4px;border:1px solid #eee;">
+      <div class="field"><label>昼食代・カフェ（万/月）</label><input type="number" id="wAllow_lunch" value="1.5" step="0.5"></div>
+      <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="wAllow_hobby" value="1" step="0.5"></div>
+      <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="wAllow_social" value="0.5" step="0.5"></div>
+      <div class="field"><label>その他（万/月）</label><input type="number" id="wAllow_other" value="0" step="0.5"></div>
+    </div>
+  </details>
+  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは各人4項目の内訳合計（別計上・インフレ反映あり、子独立後の減額は非適用）</div>
 
   <h2>🎓 教育費 <button class="view-detail-btn" onclick="showEduDetail()">📚 授業料 年次内訳</button></h2>
   <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>① 授業料</strong>（プリセット）</label>
@@ -800,8 +818,10 @@ function simulate() {
   const livingBase = livingIds.reduce((sum, id) => sum + val(id), 0);
   const livingGrowth = val('livingGrowth') / 100;
   const postChildRatio = val('postChildRatio');
-  const husbandAllow = val('husbandAllowance');
-  const wifeAllow = val('wifeAllowance');
+  const husbandAllowIds = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_other'];
+  const wifeAllowIds = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_other'];
+  const husbandAllow = husbandAllowIds.reduce((sum, id) => sum + val(id), 0);
+  const wifeAllow = wifeAllowIds.reduce((sum, id) => sum + val(id), 0);
   const eduPresetKey = valStr('eduPreset');
   const eduEndAge = val('eduEndAge');
   const childLessons = val('childLessons');
@@ -900,10 +920,9 @@ function simulate() {
       }
     });
     const nisaBal = nisaBals.reduce((s, b) => s + b, 0);
-    // 教育費の実質的な家計負担分（NISAでまかなえない分）
-    const eduCostNet = fullEduCost - nisaWithdrawal;
-    // 教育列に表示する家計キャッシュ影響額 = NISA積立 + NISAで不足する授業料 + 習い事 + 医療費
-    const eduCost = nisaDeposit + eduCostNet + lessonCost + medicalCost;
+    // 教育費を支出（授業料総額＋習い事＋医療費＋NISA積立）と収入（NISA取崩＝授業料への充当分）に分離
+    const eduExpense = fullEduCost + lessonCost + medicalCost + nisaDeposit;
+    const eduIncome = nisaWithdrawal;
 
     // Housing: rental vs owned with dynamic loan
     let housingMonthly;
@@ -922,8 +941,8 @@ function simulate() {
     const customTotal = calcCustomForYear(year, startYear, hAge);
     const tax = (hGross + wGross) * taxRate;
 
-    const totalIncome = hNet + wNet + retire + pension + childAllow;
-    const totalExpense = living + eduCost + housing + ins + customTotal + tax;
+    const totalIncome = hNet + wNet + retire + pension + childAllow + eduIncome;
+    const totalExpense = living + eduExpense + housing + ins + customTotal + tax;
 
     const invDeposit = hAge <= invEndAge ? invMonthly * 12 : 0;
     const idecoDeposit = hAge < idecoAge ? idecoMonthly * 12 : 0;
@@ -951,7 +970,7 @@ function simulate() {
     rows.push({
       year, hAge, wAge, cAges,
       hGross, wGross, hNet, wNet, retire, pension, childAllow,
-      totalIncome, living, eduCost, fullEduCost, nisaDeposit, nisaWithdrawal, lessonCost, medicalCost, housing, housingMonthly, housingPurchase, ins, customTotal, tax, totalExpense,
+      totalIncome, living, eduExpense, eduIncome, fullEduCost, nisaDeposit, nisaWithdrawal, lessonCost, medicalCost, housing, housingMonthly, housingPurchase, ins, customTotal, tax, totalExpense,
       balance: totalIncome - totalExpense + idecoLump,
       invDeposit, invBal, idecoBal, drawdown,
       nisaBal,
@@ -975,6 +994,12 @@ function render(rows) {
   const livingIdsForDisplay = ['liv_food','liv_eatout','liv_daily','liv_util','liv_internet','liv_transport','liv_subsc','liv_enter','liv_cloth','liv_other'];
   const livingMonthlyTotal = livingIdsForDisplay.reduce((s, id) => s + val(id), 0);
   document.getElementById('livingTotalDisplay').textContent = livingMonthlyTotal.toFixed(1);
+
+  // お小遣い内訳の合計表示
+  const husbandAllowIdsForDisplay = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_other'];
+  const wifeAllowIdsForDisplay = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_other'];
+  document.getElementById('husbandAllowTotalDisplay').textContent = husbandAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
+  document.getElementById('wifeAllowTotalDisplay').textContent = wifeAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
 
   document.getElementById('totalIncome').textContent = fmt(totalInc) + '万円';
   document.getElementById('totalExpense').textContent = fmt(totalExp) + '万円';
@@ -1185,45 +1210,43 @@ function render(rows) {
     }]
   });
 
-  const headers = ['西暦','夫齢','子齢','収入','生活','教育','住宅','保険','臨時','社税','支出','収支','投残','iDeCo','NISA','現預金','全資産','iDeCo除く資産','破綻'];
+  const headers = ['西暦','夫齢','子齢','収入','生活','教育支出','教育収入','住宅','保険','臨時','社税','支出','収支','投残','iDeCo','NISA','現預金','全資産','iDeCo除く資産','破綻'];
   document.getElementById('cfHeader').innerHTML = headers.map(h=>`<th>${h}</th>`).join('');
   document.getElementById('cfBody').innerHTML = rows.map(r=>{
     const cls = r.bankrupt ? 'bankrupt' : '';
     const housingDisp = r.housingPurchase > 0
       ? `<span title="月住宅費${fmt(r.housingMonthly)}＋頭金${fmt(r.housingPurchase)}" style="color:#C0524A;font-weight:bold;">${fmt(r.housing)} 🏠</span>`
       : fmt(r.housing);
-    const householdEduBurden = r.fullEduCost - r.nisaWithdrawal;  // 家計実質負担（授業料）
     const lessonsMed = r.lessonCost + r.medicalCost;
-    const eduCashImpact = r.nisaDeposit + householdEduBurden + lessonsMed;  // 支出列への寄与（教育費総額）
-    const eduTitle = `①授業料: ${fmt(r.fullEduCost)}万 / ②習い事: ${fmt(r.lessonCost)}万 / ③医療費: ${fmt(r.medicalCost)}万 / ④NISA積立: ${fmt(r.nisaDeposit)}万 / NISA取崩(授業料充当): ${fmt(r.nisaWithdrawal)}万 / 家計負担合計(支出列): ${fmt(eduCashImpact)}万`;
-    // 教育列：家計の実質キャッシュ流出（= 授業料-NISA取崩 + 習い事 + 医療費 + NISA積立）
-    let eduDisplay;
+    const eduExpenseTitle = `①授業料: ${fmt(r.fullEduCost)}万 / ②習い事: ${fmt(r.lessonCost)}万 / ③医療費: ${fmt(r.medicalCost)}万 / ④NISA積立: ${fmt(r.nisaDeposit)}万 / 教育費支出合計: ${fmt(r.eduExpense)}万`;
+    const eduIncomeTitle = r.eduIncome > 0 ? `NISA取崩(授業料へ充当): ${fmt(r.eduIncome)}万` : 'この年はNISA取崩なし';
     const noteStyle = 'font-size:9px;color:#9B7FBF;display:block;line-height:1.1;';
-    if (eduCashImpact === 0 && r.fullEduCost === 0) {
+    // 教育支出列：授業料総額 + 習い事 + 医療費 + NISA積立（NISA取崩は差し引かない総額）
+    let eduDisplay;
+    if (r.eduExpense === 0) {
       eduDisplay = '-';
     } else {
-      // メイン = 教育費キャッシュ影響、サブ = 内訳のうち重要なもの
       let sub = '';
-      if (r.nisaWithdrawal > 0) {
-        // 大学：授業料の一部・全部をNISAで充当
-        sub = `授${fmt(r.fullEduCost)}↳NISA-${fmt(r.nisaWithdrawal)}`;
-      } else if (r.fullEduCost > 0 && r.nisaDeposit > 0) {
-        // 3-17歳：授業料 + 習医 + NISA積立
+      if (r.fullEduCost > 0 && r.nisaDeposit > 0) {
         sub = `授${fmt(r.fullEduCost)}+習医${fmt(lessonsMed)}+NISA${fmt(r.nisaDeposit)}`;
       } else if (r.fullEduCost > 0) {
         sub = `授${fmt(r.fullEduCost)}+習医${fmt(lessonsMed)}`;
       } else if (r.nisaDeposit > 0) {
-        // 0-2歳：NISA積立 + 習医
         sub = `習医${fmt(lessonsMed)}+NISA${fmt(r.nisaDeposit)}`;
       } else if (lessonsMed > 0) {
         sub = `習い事+医療費`;
       }
-      eduDisplay = `${fmt(eduCashImpact)}<span style="${noteStyle}">${sub}</span>`;
+      eduDisplay = `${fmt(r.eduExpense)}<span style="${noteStyle}">${sub}</span>`;
     }
+    // 教育収入列：NISA取崩（大学の授業料に充当した分）
+    const eduIncomeDisplay = r.eduIncome > 0
+      ? `${fmt(r.eduIncome)}<span style="${noteStyle}">NISA取崩</span>`
+      : '-';
+    const incomeTitle = `内訳: 夫${fmt(r.hNet)}万＋妻${fmt(r.wNet)}万＋退職金${fmt(r.retire)}万＋年金${fmt(r.pension)}万＋児童手当${fmt(r.childAllow)}万＋教育収入(NISA取崩)${fmt(r.eduIncome)}万`;
     const assetExIdeco = r.totalAsset - r.idecoBal;
     const exIdecoStyle = assetExIdeco < 0 ? 'color:#C0524A;font-weight:bold;background:#FBE9E7;' : '';
     const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
-    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${cAgeDisp}</td><td>${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduTitle}">${eduDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
+    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${cAgeDisp}</td><td title="${incomeTitle}">${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduExpenseTitle}">${eduDisplay}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduIncomeTitle}">${eduIncomeDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
   }).join('');
 
   // === Housing purchase impact display ===
@@ -1395,7 +1418,17 @@ if (_savedData) {
 
 // Apply saved input values first (現在年収・年齢を給与カーブ生成前に反映)
 if (_savedData && _savedData.inputs) {
-  Object.entries(_savedData.inputs).forEach(([id, v]) => {
+  const inp = _savedData.inputs;
+  // 旧バージョン（お小遣いを1項目で入力）からの移行：内訳が保存されていなければ全額を「その他」に割り当てる
+  if (inp.husbandAllowance !== undefined && inp.hAllow_other === undefined) {
+    inp.hAllow_other = inp.husbandAllowance;
+    inp.hAllow_lunch = '0'; inp.hAllow_hobby = '0'; inp.hAllow_social = '0';
+  }
+  if (inp.wifeAllowance !== undefined && inp.wAllow_other === undefined) {
+    inp.wAllow_other = inp.wifeAllowance;
+    inp.wAllow_lunch = '0'; inp.wAllow_hobby = '0'; inp.wAllow_social = '0';
+  }
+  Object.entries(inp).forEach(([id, v]) => {
     const el = document.getElementById(id);
     if (el) el.value = v;
   });
@@ -1650,14 +1683,25 @@ async function exportToExcel() {
     const livSum = livItems.reduce((s, x) => s + x[1], 0);
     const subtotalRow = wsM.addRow(['生活費 小計', r1_(livSum), '10項目合計']);
     subtotalRow.font = { italic: true };
-    wsM.addRow(['夫お小遣い', r1_(val('husbandAllowance')), '']);
-    wsM.addRow(['妻お小遣い', r1_(val('wifeAllowance')), '']);
+    const hAllowItems = [
+      ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['その他', val('hAllow_other')]
+    ];
+    const wAllowItems = [
+      ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['その他', val('wAllow_other')]
+    ];
+    hAllowItems.forEach(([name, v_]) => wsM.addRow(['夫お小遣い：' + name, r1_(v_), 'お小遣い内訳']));
+    const hAllowSubtotal = wsM.addRow(['夫お小遣い 小計', r1_(hAllowItems.reduce((s, x) => s + x[1], 0)), '4項目合計']);
+    hAllowSubtotal.font = { italic: true };
+    wAllowItems.forEach(([name, v_]) => wsM.addRow(['妻お小遣い：' + name, r1_(v_), 'お小遣い内訳']));
+    const wAllowSubtotal = wsM.addRow(['妻お小遣い 小計', r1_(wAllowItems.reduce((s, x) => s + x[1], 0)), '4項目合計']);
+    wAllowSubtotal.font = { italic: true };
     wsM.addRow(['生活費合計（お小遣い込み）', r1_(r0.living / 12), '今年のインフレ反映後の値']);
     wsM.addRow(['住宅費（ローン月額）', r1_(r0.housingMonthly), '今年（初年度ベース）']);
-    wsM.addRow(['教育費：授業料（家計負担分）', r1_((r0.fullEduCost - r0.nisaWithdrawal) / 12), '子供NISAで充当した分を除く']);
+    wsM.addRow(['教育費：授業料（総額）', r1_(r0.fullEduCost / 12), '']);
     wsM.addRow(['教育費：子供NISA積立', r1_(r0.nisaDeposit / 12), '']);
     wsM.addRow(['教育費：習い事', r1_(r0.lessonCost / 12), '']);
     wsM.addRow(['教育費：医療費', r1_(r0.medicalCost / 12), '']);
+    wsM.addRow(['（参考）教育費収入：NISA取崩', r1_(r0.eduIncome / 12), '授業料へ充当（上記授業料の内数）']);
     wsM.addRow(['保険料', r1_(val('insurance') / 12), '年額÷12']);
     wsM.addRow(['臨時・追加費用', r1_(r0.customTotal / 12), '臨時支出項目（今年分）']);
     wsM.addRow(['社保・税金', r1_(r0.tax / 12), '額面収入×税率']);
@@ -1676,14 +1720,14 @@ async function exportToExcel() {
 
     // === 2) キャッシュフロー表 ===
     const wsC = wb.addWorksheet('キャッシュフロー表');
-    const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く資産', '破綻'];
+    const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く資産', '破綻'];
     wsC.addRow(cfHeaders);
     styleHeaderRow(wsC.getRow(1));
     rows.forEach(r => {
       const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
       const row = wsC.addRow([
         r.year, r.hAge, cAgeDisp,
-        Math.round(r.totalIncome), Math.round(r.living), Math.round(r.eduCost), Math.round(r.housing),
+        Math.round(r.totalIncome), Math.round(r.living), Math.round(r.eduExpense), Math.round(r.eduIncome), Math.round(r.housing),
         Math.round(r.ins), Math.round(r.customTotal), Math.round(r.tax), Math.round(r.totalExpense),
         Math.round(r.balance), Math.round(r.invBal), Math.round(r.idecoBal), Math.round(r.nisaBal),
         Math.round(r.cash), Math.round(r.totalAsset), Math.round(r.totalAsset - r.idecoBal),
@@ -1693,7 +1737,7 @@ async function exportToExcel() {
         row.eachCell(c => { c.font = { color: { argb: 'FFC0524A' }, bold: true }; });
       }
     });
-    autoWidth(wsC, [8, 8, 10, 9, 8, 8, 8, 8, 8, 8, 9, 9, 11, 10, 12, 9, 9, 13, 9]);
+    autoWidth(wsC, [8, 8, 10, 9, 8, 8, 8, 8, 8, 8, 8, 9, 9, 11, 10, 12, 9, 9, 13, 9]);
     wsC.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
 
     // === 3) ライフプランのグラフ ===
@@ -1832,14 +1876,23 @@ function buildPdfHtml_() {
   const livSum = livItems.reduce((s, x) => s + x[1], 0);
   let monthlyRowsHtml = livItems.map(([n, v]) => `<tr><td>${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">生活費10項目</td></tr>`).join('');
   monthlyRowsHtml += `<tr style="font-style:italic;"><td>生活費 小計</td><td style="text-align:right;">${r1_(livSum)}</td><td style="color:#999;">10項目合計</td></tr>`;
-  monthlyRowsHtml += `<tr><td>夫お小遣い</td><td style="text-align:right;">${r1_(val('husbandAllowance'))}</td><td></td></tr>`;
-  monthlyRowsHtml += `<tr><td>妻お小遣い</td><td style="text-align:right;">${r1_(val('wifeAllowance'))}</td><td></td></tr>`;
+  const hAllowItemsPdf = [
+    ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['その他', val('hAllow_other')]
+  ];
+  const wAllowItemsPdf = [
+    ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['その他', val('wAllow_other')]
+  ];
+  monthlyRowsHtml += hAllowItemsPdf.map(([n, v]) => `<tr><td>夫お小遣い：${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">お小遣い内訳</td></tr>`).join('');
+  monthlyRowsHtml += `<tr style="font-style:italic;"><td>夫お小遣い 小計</td><td style="text-align:right;">${r1_(hAllowItemsPdf.reduce((s, x) => s + x[1], 0))}</td><td style="color:#999;">4項目合計</td></tr>`;
+  monthlyRowsHtml += wAllowItemsPdf.map(([n, v]) => `<tr><td>妻お小遣い：${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">お小遣い内訳</td></tr>`).join('');
+  monthlyRowsHtml += `<tr style="font-style:italic;"><td>妻お小遣い 小計</td><td style="text-align:right;">${r1_(wAllowItemsPdf.reduce((s, x) => s + x[1], 0))}</td><td style="color:#999;">4項目合計</td></tr>`;
   monthlyRowsHtml += `<tr><td>生活費合計（お小遣い込み）</td><td style="text-align:right;">${r1_(r0.living / 12)}</td><td style="color:#999;">今年の値</td></tr>`;
   monthlyRowsHtml += `<tr><td>住宅費（ローン月額）</td><td style="text-align:right;">${r1_(r0.housingMonthly)}</td><td style="color:#999;">今年（初年度ベース）</td></tr>`;
-  monthlyRowsHtml += `<tr><td>教育費：授業料（家計負担分）</td><td style="text-align:right;">${r1_((r0.fullEduCost - r0.nisaWithdrawal) / 12)}</td><td style="color:#999;">子供NISA充当分を除く</td></tr>`;
+  monthlyRowsHtml += `<tr><td>教育費：授業料（総額）</td><td style="text-align:right;">${r1_(r0.fullEduCost / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>教育費：子供NISA積立</td><td style="text-align:right;">${r1_(r0.nisaDeposit / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>教育費：習い事</td><td style="text-align:right;">${r1_(r0.lessonCost / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>教育費：医療費</td><td style="text-align:right;">${r1_(r0.medicalCost / 12)}</td><td></td></tr>`;
+  monthlyRowsHtml += `<tr><td>（参考）教育費収入：NISA取崩</td><td style="text-align:right;">${r1_(r0.eduIncome / 12)}</td><td style="color:#999;">授業料へ充当（上記授業料の内数）</td></tr>`;
   monthlyRowsHtml += `<tr><td>保険料</td><td style="text-align:right;">${r1_(val('insurance') / 12)}</td><td style="color:#999;">年額÷12</td></tr>`;
   monthlyRowsHtml += `<tr><td>臨時・追加費用</td><td style="text-align:right;">${r1_(r0.customTotal / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>社保・税金</td><td style="text-align:right;">${r1_(r0.tax / 12)}</td><td style="color:#999;">額面収入×税率</td></tr>`;
@@ -1859,12 +1912,12 @@ function buildPdfHtml_() {
   </div>`;
 
   // === 2) キャッシュフロー表 ===
-  const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く', '破綻'];
+  const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く', '破綻'];
   let cfRowsHtml = rows.map(r => {
     const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
     const bankClass = r.bankrupt ? ' style="color:#C0524A;font-weight:700;"' : '';
     return `<tr${bankClass}><td>${r.year}</td><td>${r.hAge}</td><td>${esc_(cAgeDisp)}</td>` +
-      `<td>${Math.round(r.totalIncome)}</td><td>${Math.round(r.living)}</td><td>${Math.round(r.eduCost)}</td>` +
+      `<td>${Math.round(r.totalIncome)}</td><td>${Math.round(r.living)}</td><td>${Math.round(r.eduExpense)}</td><td>${Math.round(r.eduIncome)}</td>` +
       `<td>${Math.round(r.housing)}</td><td>${Math.round(r.ins)}</td><td>${Math.round(r.customTotal)}</td>` +
       `<td>${Math.round(r.tax)}</td><td>${Math.round(r.totalExpense)}</td><td>${Math.round(r.balance)}</td>` +
       `<td>${Math.round(r.invBal)}</td><td>${Math.round(r.idecoBal)}</td><td>${Math.round(r.nisaBal)}</td>` +
