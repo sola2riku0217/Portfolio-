@@ -294,6 +294,7 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <div class="field"><label>昼食代・カフェ（万/月）</label><input type="number" id="hAllow_lunch" value="1.5" step="0.5"></div>
       <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="hAllow_hobby" value="1" step="0.5"></div>
       <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="hAllow_social" value="0.5" step="0.5"></div>
+      <div class="field"><label>保険（万/月）</label><input type="number" id="hAllow_insurance" value="1.5" step="0.5"></div>
       <div class="field"><label>その他（万/月）</label><input type="number" id="hAllow_other" value="0" step="0.5"></div>
     </div>
   </details>
@@ -304,10 +305,11 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <div class="field"><label>昼食代・カフェ（万/月）</label><input type="number" id="wAllow_lunch" value="1.5" step="0.5"></div>
       <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="wAllow_hobby" value="1" step="0.5"></div>
       <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="wAllow_social" value="0.5" step="0.5"></div>
+      <div class="field"><label>保険（万/月）</label><input type="number" id="wAllow_insurance" value="1" step="0.5"></div>
       <div class="field"><label>その他（万/月）</label><input type="number" id="wAllow_other" value="0" step="0.5"></div>
     </div>
   </details>
-  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは各人4項目の内訳合計（別計上・インフレ反映あり、子独立後の減額は非適用）</div>
+  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは各人5項目の内訳合計（保険料を含む・別計上・インフレ反映あり、子独立後の減額は非適用）</div>
 
   <h2>🎓 教育費 <button class="view-detail-btn" onclick="showEduDetail()">📚 授業料 年次内訳</button></h2>
   <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>① 授業料</strong>（プリセット）</label>
@@ -346,18 +348,16 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
     <div style="font-weight:600; margin-bottom:6px; color:#4F7F67;">🟢 自動算出値</div>
     <div class="calc-row"><span>借入額：</span><strong id="calcLoan">-</strong> 万円</div>
     <div class="calc-row"><span><strong>月返済額（初年度・ローンのみ）：</strong></span><strong id="calcMonthlyLoan" style="color:#4F7F67;">-</strong> 万円/月</div>
-    <div class="calc-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #b6d098;"><span>修繕積立金：</span><strong id="calcMaintenance">-</strong> 万円/年</div>
-    <div class="calc-row"><span>固定資産税：</span><strong id="calcFixedTax">-</strong> 万円/年</div>
-    <div class="calc-row"><span>都市計画税：</span><strong id="calcCityTax">-</strong> 万円/年</div>
+    <div class="calc-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #b6d098;"><span>修繕積立金：</span><strong id="calcMaintenance">-</strong> 万円/年（<strong id="calcMaintenanceMonthly">-</strong> 万円/月）</div>
+    <div class="calc-row"><span>固定資産税：</span><strong id="calcFixedTax">-</strong> 万円/年（<strong id="calcFixedTaxMonthly">-</strong> 万円/月）</div>
+    <div class="calc-row"><span>都市計画税：</span><strong id="calcCityTax">-</strong> 万円/年（<strong id="calcCityTaxMonthly">-</strong> 万円/月）</div>
+    <div class="calc-row" style="margin-top:6px; padding-top:4px; border-top:1px solid rgba(79,127,103,.3);"><span><strong>住宅費 月額合計（ローン＋修繕積立＋固都税＋管理費）：</strong></span><strong id="calcTotalHousingMonthly" style="color:#4F7F67;">-</strong> 万円/月</div>
     <div class="calc-row" style="margin-top:6px; padding-top:4px; border-top:1px solid rgba(79,127,103,.3);"><span><strong>諸経費（購入時一括）：</strong></span><strong id="calcClosingCost" style="color:#C0524A;">-</strong> 万円</div>
     <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11px; color:#999;">諸経費の内訳を見る</summary>
       <div id="closingDetail" style="font-size:10px; padding:6px; color:#999;"></div>
     </details>
   </div>
-  <div class="note" style="margin-top:6px;">※ 購入年に「頭金＋諸経費」を一括計上。不足は投資残高から自動取崩。<br>※ 算出根拠：修繕積立金=価格×0.2%/12、固都税=土地1/6×1.4%＋建物×1.4%×1/2、諸経費=仲介手数料(価格×3%+6万)×1.1＋登録免許税＋ローン事務手数料(借入×2.2%)＋火災保険10年＋諸雑費等</div>
-
-  <h2>🛡 保険料</h2>
-  <div class="field"><label>年額(万円)</label><input type="number" id="insurance" value="30"></div>
+  <div class="note" style="margin-top:6px;">※ 購入年に「頭金＋諸経費」を一括計上。不足は投資残高から自動取崩。<br>※ 算出根拠：修繕積立金=価格×0.2%/12、固都税=土地1/6×1.4%＋建物×1.4%×1/2、諸経費=仲介手数料(価格×3%+6万)×1.1＋登録免許税＋ローン事務手数料(借入×2.2%)＋火災保険10年＋諸雑費等<br>※ 修繕積立金・固定資産税・都市計画税・管理費は「住宅費 月額合計」としてローン返済額と合算済み。キャッシュフロー表・グラフの「住宅」にはこの合計額が反映されています（別途加算はされません）</div>
 
   <h2>📈 資産運用</h2>
   <div class="field"><label>現在残高(万円)</label><input type="number" id="invInitial" value="900"></div>
@@ -818,8 +818,8 @@ function simulate() {
   const livingBase = livingIds.reduce((sum, id) => sum + val(id), 0);
   const livingGrowth = val('livingGrowth') / 100;
   const postChildRatio = val('postChildRatio');
-  const husbandAllowIds = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_other'];
-  const wifeAllowIds = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_other'];
+  const husbandAllowIds = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_other'];
+  const wifeAllowIds = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_other'];
   const husbandAllow = husbandAllowIds.reduce((sum, id) => sum + val(id), 0);
   const wifeAllow = wifeAllowIds.reduce((sum, id) => sum + val(id), 0);
   const eduPresetKey = valStr('eduPreset');
@@ -834,7 +834,6 @@ function simulate() {
   const downPayment = val('downPayment');
   const loanTerm = val('loanTerm') || 35;
   const mgmtFee = val('mgmtFee');
-  const insurance = val('insurance');
 
   // === Housing computed values ===
   const amort = computeAmortization(housePrice, downPayment, loanTerm);
@@ -937,12 +936,11 @@ function simulate() {
     }
     const housingPurchase = (hAge === rentEndAge) ? (downPayment + closing.total) : 0;
     const housing = housingMonthly + housingPurchase;
-    const ins = insurance;
     const customTotal = calcCustomForYear(year, startYear, hAge);
     const tax = (hGross + wGross) * taxRate;
 
     const totalIncome = hNet + wNet + retire + pension + childAllow + eduIncome;
-    const totalExpense = living + eduExpense + housing + ins + customTotal + tax;
+    const totalExpense = living + eduExpense + housing + customTotal + tax;
 
     const invDeposit = hAge <= invEndAge ? invMonthly * 12 : 0;
     const idecoDeposit = hAge < idecoAge ? idecoMonthly * 12 : 0;
@@ -970,7 +968,7 @@ function simulate() {
     rows.push({
       year, hAge, wAge, cAges,
       hGross, wGross, hNet, wNet, retire, pension, childAllow,
-      totalIncome, living, eduExpense, eduIncome, fullEduCost, nisaDeposit, nisaWithdrawal, lessonCost, medicalCost, housing, housingMonthly, housingPurchase, ins, customTotal, tax, totalExpense,
+      totalIncome, living, eduExpense, eduIncome, fullEduCost, nisaDeposit, nisaWithdrawal, lessonCost, medicalCost, housing, housingMonthly, housingPurchase, customTotal, tax, totalExpense,
       balance: totalIncome - totalExpense + idecoLump,
       invDeposit, invBal, idecoBal, drawdown,
       nisaBal,
@@ -996,8 +994,8 @@ function render(rows) {
   document.getElementById('livingTotalDisplay').textContent = livingMonthlyTotal.toFixed(1);
 
   // お小遣い内訳の合計表示
-  const husbandAllowIdsForDisplay = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_other'];
-  const wifeAllowIdsForDisplay = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_other'];
+  const husbandAllowIdsForDisplay = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_other'];
+  const wifeAllowIdsForDisplay = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_other'];
   document.getElementById('husbandAllowTotalDisplay').textContent = husbandAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
   document.getElementById('wifeAllowTotalDisplay').textContent = wifeAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
 
@@ -1114,8 +1112,12 @@ function render(rows) {
   document.getElementById('calcLoan').textContent = fmt(amortDisp.loanAmount);
   document.getElementById('calcMonthlyLoan').textContent = firstMonthly.toFixed(2);
   document.getElementById('calcMaintenance').textContent = (maint * 12).toFixed(1);
+  document.getElementById('calcMaintenanceMonthly').textContent = maint.toFixed(2);
   document.getElementById('calcFixedTax').textContent = taxDisp.fixedTaxYearly.toFixed(1);
+  document.getElementById('calcFixedTaxMonthly').textContent = taxDisp.fixedTaxMonthly.toFixed(2);
   document.getElementById('calcCityTax').textContent = taxDisp.cityTaxYearly.toFixed(1);
+  document.getElementById('calcCityTaxMonthly').textContent = taxDisp.cityTaxMonthly.toFixed(2);
+  document.getElementById('calcTotalHousingMonthly').textContent = totalHousingMonthly.toFixed(2);
   document.getElementById('calcClosingCost').textContent = fmt(closingDisp.total);
   document.getElementById('closingDetail').innerHTML = `
     仲介手数料: ${closingDisp.brokerFee.toFixed(1)}万 / 印紙税(売買): ${closingDisp.stampSale}万 / 印紙税(ローン): ${closingDisp.stampLoan}万<br>
@@ -1210,7 +1212,7 @@ function render(rows) {
     }]
   });
 
-  const headers = ['西暦','夫齢','子齢','収入','生活','教育支出','教育収入','住宅','保険','臨時','社税','支出','収支','投残','iDeCo','NISA','現預金','全資産','iDeCo除く資産','破綻'];
+  const headers = ['西暦','夫齢','子齢','収入','生活','教育支出','教育収入','住宅','臨時','社税','支出','収支','投残','iDeCo','NISA','現預金','全資産','iDeCo除く資産','破綻'];
   document.getElementById('cfHeader').innerHTML = headers.map(h=>`<th>${h}</th>`).join('');
   document.getElementById('cfBody').innerHTML = rows.map(r=>{
     const cls = r.bankrupt ? 'bankrupt' : '';
@@ -1246,7 +1248,7 @@ function render(rows) {
     const assetExIdeco = r.totalAsset - r.idecoBal;
     const exIdecoStyle = assetExIdeco < 0 ? 'color:#C0524A;font-weight:bold;background:#FBE9E7;' : '';
     const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
-    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${cAgeDisp}</td><td title="${incomeTitle}">${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduExpenseTitle}">${eduDisplay}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduIncomeTitle}">${eduIncomeDisplay}</td><td>${housingDisp}</td><td>${fmt(r.ins)}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
+    return `<tr class="${cls}"><td>${r.year}</td><td>${r.hAge}</td><td>${cAgeDisp}</td><td title="${incomeTitle}">${fmt(r.totalIncome)}</td><td>${fmt(r.living)}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduExpenseTitle}">${eduDisplay}</td><td class="edu-clickable" onclick="showEduDetail()" title="${eduIncomeTitle}">${eduIncomeDisplay}</td><td>${housingDisp}</td><td>${fmt(r.customTotal)}</td><td>${fmt(r.tax)}</td><td>${fmt(r.totalExpense)}</td><td>${fmt(r.balance)}</td><td>${fmt(r.invBal)}</td><td>${fmt(r.idecoBal)}</td><td style="color:#9B7FBF;font-weight:600;">${fmt(r.nisaBal)}</td><td>${fmt(r.cash)}</td><td>${fmt(r.totalAsset)}</td><td style="${exIdecoStyle}" title="現預金＋投資＋NISA（iDeCo受給前は使えない資産）">${fmt(assetExIdeco)}</td><td class="flag">${r.bankrupt?'⚠️':''}</td></tr>`;
   }).join('');
 
   // === Housing purchase impact display ===
@@ -1684,10 +1686,10 @@ async function exportToExcel() {
     const subtotalRow = wsM.addRow(['生活費 小計', r1_(livSum), '10項目合計']);
     subtotalRow.font = { italic: true };
     const hAllowItems = [
-      ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['その他', val('hAllow_other')]
+      ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['その他', val('hAllow_other')]
     ];
     const wAllowItems = [
-      ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['その他', val('wAllow_other')]
+      ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['その他', val('wAllow_other')]
     ];
     hAllowItems.forEach(([name, v_]) => wsM.addRow(['夫お小遣い：' + name, r1_(v_), 'お小遣い内訳']));
     const hAllowSubtotal = wsM.addRow(['夫お小遣い 小計', r1_(hAllowItems.reduce((s, x) => s + x[1], 0)), '4項目合計']);
@@ -1702,12 +1704,11 @@ async function exportToExcel() {
     wsM.addRow(['教育費：習い事', r1_(r0.lessonCost / 12), '']);
     wsM.addRow(['教育費：医療費', r1_(r0.medicalCost / 12), '']);
     wsM.addRow(['（参考）教育費収入：NISA取崩', r1_(r0.eduIncome / 12), '授業料へ充当（上記授業料の内数）']);
-    wsM.addRow(['保険料', r1_(val('insurance') / 12), '年額÷12']);
     wsM.addRow(['臨時・追加費用', r1_(r0.customTotal / 12), '臨時支出項目（今年分）']);
     wsM.addRow(['社保・税金', r1_(r0.tax / 12), '額面収入×税率']);
     wsM.addRow(['一般NISA・投資 積立', r1_(val('invMonthly')), '資産運用への積立']);
     wsM.addRow(['iDeCo 拠出', r1_(val('idecoMonthly')), '']);
-    const totalRow = wsM.addRow(['合計支出（生活関連）', r1_(r0.totalExpense / 12), '生活費+住宅+教育+保険+臨時+社税']);
+    const totalRow = wsM.addRow(['合計支出（生活関連）', r1_(r0.totalExpense / 12), '生活費（お小遣い・保険込み）+住宅+教育+臨時+社税']);
     totalRow.font = { bold: true };
     const totalRow2 = wsM.addRow(['合計支出＋資産形成積立', r1_(r0.totalExpense / 12 + val('invMonthly') + val('idecoMonthly')), '上記＋一般NISA＋iDeCo']);
     totalRow2.font = { bold: true };
@@ -1720,7 +1721,7 @@ async function exportToExcel() {
 
     // === 2) キャッシュフロー表 ===
     const wsC = wb.addWorksheet('キャッシュフロー表');
-    const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く資産', '破綻'];
+    const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く資産', '破綻'];
     wsC.addRow(cfHeaders);
     styleHeaderRow(wsC.getRow(1));
     rows.forEach(r => {
@@ -1728,7 +1729,7 @@ async function exportToExcel() {
       const row = wsC.addRow([
         r.year, r.hAge, cAgeDisp,
         Math.round(r.totalIncome), Math.round(r.living), Math.round(r.eduExpense), Math.round(r.eduIncome), Math.round(r.housing),
-        Math.round(r.ins), Math.round(r.customTotal), Math.round(r.tax), Math.round(r.totalExpense),
+        Math.round(r.customTotal), Math.round(r.tax), Math.round(r.totalExpense),
         Math.round(r.balance), Math.round(r.invBal), Math.round(r.idecoBal), Math.round(r.nisaBal),
         Math.round(r.cash), Math.round(r.totalAsset), Math.round(r.totalAsset - r.idecoBal),
         r.bankrupt ? '⚠️ 破綻' : ''
@@ -1737,7 +1738,7 @@ async function exportToExcel() {
         row.eachCell(c => { c.font = { color: { argb: 'FFC0524A' }, bold: true }; });
       }
     });
-    autoWidth(wsC, [8, 8, 10, 9, 8, 8, 8, 8, 8, 8, 8, 9, 9, 11, 10, 12, 9, 9, 13, 9]);
+    autoWidth(wsC, [8, 8, 10, 9, 8, 8, 8, 8, 8, 8, 9, 9, 11, 10, 12, 9, 9, 13, 9]);
     wsC.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
 
     // === 3) ライフプランのグラフ ===
@@ -1877,10 +1878,10 @@ function buildPdfHtml_() {
   let monthlyRowsHtml = livItems.map(([n, v]) => `<tr><td>${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">生活費10項目</td></tr>`).join('');
   monthlyRowsHtml += `<tr style="font-style:italic;"><td>生活費 小計</td><td style="text-align:right;">${r1_(livSum)}</td><td style="color:#999;">10項目合計</td></tr>`;
   const hAllowItemsPdf = [
-    ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['その他', val('hAllow_other')]
+    ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['その他', val('hAllow_other')]
   ];
   const wAllowItemsPdf = [
-    ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['その他', val('wAllow_other')]
+    ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['その他', val('wAllow_other')]
   ];
   monthlyRowsHtml += hAllowItemsPdf.map(([n, v]) => `<tr><td>夫お小遣い：${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">お小遣い内訳</td></tr>`).join('');
   monthlyRowsHtml += `<tr style="font-style:italic;"><td>夫お小遣い 小計</td><td style="text-align:right;">${r1_(hAllowItemsPdf.reduce((s, x) => s + x[1], 0))}</td><td style="color:#999;">4項目合計</td></tr>`;
@@ -1893,7 +1894,6 @@ function buildPdfHtml_() {
   monthlyRowsHtml += `<tr><td>教育費：習い事</td><td style="text-align:right;">${r1_(r0.lessonCost / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>教育費：医療費</td><td style="text-align:right;">${r1_(r0.medicalCost / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>（参考）教育費収入：NISA取崩</td><td style="text-align:right;">${r1_(r0.eduIncome / 12)}</td><td style="color:#999;">授業料へ充当（上記授業料の内数）</td></tr>`;
-  monthlyRowsHtml += `<tr><td>保険料</td><td style="text-align:right;">${r1_(val('insurance') / 12)}</td><td style="color:#999;">年額÷12</td></tr>`;
   monthlyRowsHtml += `<tr><td>臨時・追加費用</td><td style="text-align:right;">${r1_(r0.customTotal / 12)}</td><td></td></tr>`;
   monthlyRowsHtml += `<tr><td>社保・税金</td><td style="text-align:right;">${r1_(r0.tax / 12)}</td><td style="color:#999;">額面収入×税率</td></tr>`;
   monthlyRowsHtml += `<tr><td>一般NISA・投資 積立</td><td style="text-align:right;">${r1_(val('invMonthly'))}</td><td></td></tr>`;
@@ -1912,13 +1912,13 @@ function buildPdfHtml_() {
   </div>`;
 
   // === 2) キャッシュフロー表 ===
-  const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '保険', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く', '破綻'];
+  const cfHeaders = ['西暦', '夫年齢', '子年齢', '収入', '生活', '教育支出', '教育収入', '住宅', '臨時', '社税', '支出', '収支', '投資残高', 'iDeCo残高', '子供NISA残高', '現預金', '全資産', 'iDeCo除く', '破綻'];
   let cfRowsHtml = rows.map(r => {
     const cAgeDisp = r.cAges.length ? r.cAges.map(a => a < 0 ? '-' : a).join('/') : '-';
     const bankClass = r.bankrupt ? ' style="color:#C0524A;font-weight:700;"' : '';
     return `<tr${bankClass}><td>${r.year}</td><td>${r.hAge}</td><td>${esc_(cAgeDisp)}</td>` +
       `<td>${Math.round(r.totalIncome)}</td><td>${Math.round(r.living)}</td><td>${Math.round(r.eduExpense)}</td><td>${Math.round(r.eduIncome)}</td>` +
-      `<td>${Math.round(r.housing)}</td><td>${Math.round(r.ins)}</td><td>${Math.round(r.customTotal)}</td>` +
+      `<td>${Math.round(r.housing)}</td><td>${Math.round(r.customTotal)}</td>` +
       `<td>${Math.round(r.tax)}</td><td>${Math.round(r.totalExpense)}</td><td>${Math.round(r.balance)}</td>` +
       `<td>${Math.round(r.invBal)}</td><td>${Math.round(r.idecoBal)}</td><td>${Math.round(r.nisaBal)}</td>` +
       `<td>${Math.round(r.cash)}</td><td>${Math.round(r.totalAsset)}</td><td>${Math.round(r.totalAsset - r.idecoBal)}</td>` +
