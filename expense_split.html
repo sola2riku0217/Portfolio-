@@ -147,7 +147,7 @@ td.total { background: #FDF3E0; font-weight: 700; }
         <div class="label" style="margin-top:4px;font-size:10px;color:#999;">🏘️ 住宅固定費（固都税+修繕積立）: <strong id="hfixYearDisp">-</strong> 万円/年</div>
       </div>
       <div class="from-sim" style="background:#F8E9E0; border:1px solid rgba(201,128,94,.4);">
-        <div class="label">🎓 月の教育費（<span id="eduChildCountDisp">-</span>・生涯平均）</div>
+        <div class="label">🎓 月の教育費（<span id="eduChildCountDisp">-</span>・高校卒業までの平均）</div>
         <div class="value" style="color:#A05A3A;"><span id="eduMonthlyDisp">-</span> 万円/月</div>
         <div class="label" style="margin-top:4px;">年: <strong id="eduYearDisp">-</strong> ／ <span id="eduDetailDisp" style="font-size:11px;color:#999;"></span></div>
       </div>
@@ -618,7 +618,7 @@ function loadFromSim(applyDefaultAlloc, migrateFromSaved) {
     const r = (rateTiers[0] || 1.5) / 100 / 12;
     const n = loanTerm * 12;
     simLoanMonthly = r === 0 ? loanAmount / n : loanAmount * r / (1 - Math.pow(1 + r, -n));
-    // 教育費（1人あたり生涯平均 × 子供人数）
+    // 教育費（1人あたり高校卒業までの平均 × 子供人数）
     simEduMonthly = computeAvgEduMonthly(state) * simChildCount;
     // 一般NISA積立（資産運用の月積立額）
     simNisaMonthly = parseFloat(inputs.invMonthly) || 0;
@@ -680,19 +680,20 @@ const eduPresets = {
 
 let eduBreakdownText = '';
 
-// 子供1人あたりの教育費 生涯平均（月額・万円）
-// 教育費は授業料（総額）＋習い事＋医療費のみ。子供NISA（積立・取崩）と児童手当は
-// 別枠（NISAは資産形成、児童手当は「👶 児童手当」欄で収入として別途計算）のため、ここには含めない
+// 子供1人あたりの教育費 平均（月額・万円、高校卒業まで）
+// 教育費は授業料（高校卒業まで）＋習い事＋医療費のみ。子供NISA（積立・取崩）と児童手当は
+// 別枠（NISAは資産形成、児童手当は「👶 児童手当」欄で収入として別途計算）のため、ここには含めない。
+// 大学の授業料は子供NISAの取り崩しで対応する想定のため対象外（0〜17歳＝高3までを平均対象とする）
 function computeAvgEduMonthly(state) {
   const inputs = state.inputs || {};
   const presetKey = inputs.eduPreset || 'ri';
-  const eduEndAge = parseInt(inputs.eduEndAge) || 22;
   const childLessons = parseFloat(inputs.childLessons) || 0;
   const childMedical = parseFloat(inputs.childMedical) || 0;
   const arr = eduPresets[presetKey] || eduPresets.ri;
+  const highSchoolEndAge = 17;  // 高3（大学以降はNISA取り崩しで対応するため対象外）
   let schoolTotal = 0, lessonsTotal = 0, medicalTotal = 0;
-  const yearsToConsider = eduEndAge + 1;  // 0..eduEndAge
-  for (let cAge = 0; cAge <= eduEndAge; cAge++) {
+  const yearsToConsider = highSchoolEndAge + 1;  // 0..17
+  for (let cAge = 0; cAge <= highSchoolEndAge; cAge++) {
     const fullEdu = cAge < arr.length ? arr[cAge] : 0;
     schoolTotal += fullEdu;
     lessonsTotal += childLessons * 12;
@@ -704,7 +705,7 @@ function computeAvgEduMonthly(state) {
     ri: '私立理系', koritsu: '公立中心', shiritsu: 'オール私立',
     koukoushiritsu: '高校〜私立(大文系)', koukoushiritsuri: '高校〜私立(大理系)'
   }[presetKey] || presetKey;
-  eduBreakdownText = `${presetName}・${yearsToConsider}年平均/人（授業料${Math.round(schoolTotal/yearsToConsider)}＋習${Math.round(lessonsTotal/yearsToConsider)}＋医${Math.round(medicalTotal/yearsToConsider)} 万/年）`;
+  eduBreakdownText = `${presetName}・高校卒業まで${yearsToConsider}年平均/人（授業料${Math.round(schoolTotal/yearsToConsider)}＋習${Math.round(lessonsTotal/yearsToConsider)}＋医${Math.round(medicalTotal/yearsToConsider)} 万/年）`;
   return Math.max(0, monthly);  // 万/月・1人あたり
 }
 
