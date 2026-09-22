@@ -681,48 +681,30 @@ const eduPresets = {
 let eduBreakdownText = '';
 
 // 子供1人あたりの教育費 生涯平均（月額・万円）
+// 教育費は授業料（総額）＋習い事＋医療費のみ。子供NISA（積立・取崩）と児童手当は
+// 別枠（NISAは資産形成、児童手当は「👶 児童手当」欄で収入として別途計算）のため、ここには含めない
 function computeAvgEduMonthly(state) {
   const inputs = state.inputs || {};
   const presetKey = inputs.eduPreset || 'ri';
   const eduEndAge = parseInt(inputs.eduEndAge) || 22;
   const childLessons = parseFloat(inputs.childLessons) || 0;
   const childMedical = parseFloat(inputs.childMedical) || 0;
-  const nisaMonthly = parseFloat(inputs.nisaMonthly) || 0;
-  const nisaEndAge = parseInt(inputs.nisaEndAge) || 17;
-  const nisaReturn = (parseFloat(inputs.nisaReturn) || 5) / 100;
-  // 児童手当（018サポート込み）
-  const allow1 = parseFloat(inputs.childAllow1) || 0;  // 〜中学
-  const allow2 = parseFloat(inputs.childAllow2) || 0;  // 高校
   const arr = eduPresets[presetKey] || eduPresets.ri;
-  let nisaBal = 0;
-  let nisaDepTotal = 0, schoolCashTotal = 0, lessonsTotal = 0, medicalTotal = 0, allowanceTotal = 0;
+  let schoolTotal = 0, lessonsTotal = 0, medicalTotal = 0;
   const yearsToConsider = eduEndAge + 1;  // 0..eduEndAge
   for (let cAge = 0; cAge <= eduEndAge; cAge++) {
     const fullEdu = cAge < arr.length ? arr[cAge] : 0;
-    let nisaDep = 0, nisaWith = 0;
-    nisaBal = nisaBal * (1 + nisaReturn);
-    if (cAge <= nisaEndAge) { nisaDep = nisaMonthly * 12; nisaBal += nisaDep; }
-    if (cAge >= 18 && fullEdu > 0 && nisaBal > 0) {
-      nisaWith = Math.min(fullEdu, nisaBal);
-      nisaBal -= nisaWith;
-    }
-    let allowance = 0;
-    if (cAge >= 0 && cAge <= 15) allowance = allow1 * 12;
-    else if (cAge <= 18) allowance = allow2 * 12;
-    nisaDepTotal += nisaDep;
-    schoolCashTotal += (fullEdu - nisaWith);
+    schoolTotal += fullEdu;
     lessonsTotal += childLessons * 12;
     medicalTotal += childMedical * 12;
-    allowanceTotal += allowance;
   }
-  // 児童手当を相殺（教育費収入として控除）
-  const totalCash = nisaDepTotal + schoolCashTotal + lessonsTotal + medicalTotal - allowanceTotal;
+  const totalCash = schoolTotal + lessonsTotal + medicalTotal;
   const monthly = (totalCash / yearsToConsider) / 12;
   const presetName = {
     ri: '私立理系', koritsu: '公立中心', shiritsu: 'オール私立',
     koukoushiritsu: '高校〜私立(大文系)', koukoushiritsuri: '高校〜私立(大理系)'
   }[presetKey] || presetKey;
-  eduBreakdownText = `${presetName}・${yearsToConsider}年平均/人（NISA積立${Math.round(nisaDepTotal/yearsToConsider)}＋学費家計${Math.round(schoolCashTotal/yearsToConsider)}＋習${Math.round(lessonsTotal/yearsToConsider)}＋医${Math.round(medicalTotal/yearsToConsider)} − 児童手当${Math.round(allowanceTotal/yearsToConsider)} 万/年）`;
+  eduBreakdownText = `${presetName}・${yearsToConsider}年平均/人（授業料${Math.round(schoolTotal/yearsToConsider)}＋習${Math.round(lessonsTotal/yearsToConsider)}＋医${Math.round(medicalTotal/yearsToConsider)} 万/年）`;
   return Math.max(0, monthly);  // 万/月・1人あたり
 }
 
