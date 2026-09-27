@@ -281,7 +281,7 @@ td.total { background: #FDF3E0; font-weight: 700; }
     </table>
     </div>
     <button type="button" class="btn btn-add" style="margin-top:12px;" onclick="addCustomItem()">＋ 支出項目を追加</button>
-    <div class="note" style="margin-top:10px;">※ 生活費・住宅・教育費の「過不足」が <strong>0</strong> になるよう調整。「二人の貯金」は任意の共通貯蓄。<br>※ お小遣い各項目はシミュレータの夫婦それぞれの内訳（昼食代・カフェ／趣味・娯楽／交際費・飲み会／保険／その他）をそのまま反映（通常は編集不要。本人の月手取りから拠出扱い）<br>※ 追加した支出項目も個人貯金の残額・負担率・サンキー図に自動反映されます。「⚖️ 収入比で按分」で固定項目を収入比の配分に再セット（お小遣いはシミュレータの値に再読込）</div>
+    <div class="note" style="margin-top:10px;">※ 生活費・住宅・教育費の「過不足」が <strong>0</strong> になるよう調整。「二人の貯金」は任意の共通貯蓄。<br>※ お小遣い各項目はシミュレータの夫婦それぞれの内訳（昼食代・カフェ／趣味・娯楽／交際費・飲み会／保険／NISA／その他）をそのまま反映（通常は編集不要。本人の月手取りから拠出扱い）<br>※ 追加した支出項目も個人貯金の残額・負担率・サンキー図に自動反映されます。「⚖️ 収入比で按分」で固定項目を収入比の配分に再セット（お小遣いはシミュレータの値に再読込）</div>
   </div>
 
   <!-- Sankey -->
@@ -512,11 +512,13 @@ const allowanceItemDefs = [
   { key: 'HAllowHobby',     spouse: 'h', simId: 'hAllow_hobby',     label: '趣味・娯楽' },
   { key: 'HAllowSocial',    spouse: 'h', simId: 'hAllow_social',    label: '交際費・飲み会' },
   { key: 'HAllowInsurance', spouse: 'h', simId: 'hAllow_insurance', label: '保険' },
+  { key: 'HAllowNisa',      spouse: 'h', simId: 'hAllow_nisa',      label: 'NISA' },
   { key: 'HAllowOther',     spouse: 'h', simId: 'hAllow_other',     label: 'その他' },
   { key: 'WAllowLunch',     spouse: 'w', simId: 'wAllow_lunch',     label: '昼食代・カフェ' },
   { key: 'WAllowHobby',     spouse: 'w', simId: 'wAllow_hobby',     label: '趣味・娯楽' },
   { key: 'WAllowSocial',    spouse: 'w', simId: 'wAllow_social',    label: '交際費・飲み会' },
   { key: 'WAllowInsurance', spouse: 'w', simId: 'wAllow_insurance', label: '保険' },
+  { key: 'WAllowNisa',      spouse: 'w', simId: 'wAllow_nisa',      label: 'NISA' },
   { key: 'WAllowOther',     spouse: 'w', simId: 'wAllow_other',     label: 'その他' },
 ];
 let simAllowanceMonthly = {};  // { hAllow_lunch: 1.5, ... } シミュレータの月額内訳

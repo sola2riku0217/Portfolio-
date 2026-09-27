@@ -295,6 +295,7 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="hAllow_hobby" value="1" step="0.5"></div>
       <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="hAllow_social" value="0.5" step="0.5"></div>
       <div class="field"><label>保険（万/月）</label><input type="number" id="hAllow_insurance" value="1.5" step="0.5"></div>
+      <div class="field"><label>NISA（万/月）</label><input type="number" id="hAllow_nisa" value="0" step="0.5"></div>
       <div class="field"><label>その他（万/月）</label><input type="number" id="hAllow_other" value="0" step="0.5"></div>
     </div>
   </details>
@@ -306,10 +307,11 @@ td.edu-clickable:hover { background: #E5F2EA; text-decoration: underline; }
       <div class="field"><label>趣味・娯楽（万/月）</label><input type="number" id="wAllow_hobby" value="1" step="0.5"></div>
       <div class="field"><label>交際費・飲み会（万/月）</label><input type="number" id="wAllow_social" value="0.5" step="0.5"></div>
       <div class="field"><label>保険（万/月）</label><input type="number" id="wAllow_insurance" value="1" step="0.5"></div>
+      <div class="field"><label>NISA（万/月）</label><input type="number" id="wAllow_nisa" value="0" step="0.5"></div>
       <div class="field"><label>その他（万/月）</label><input type="number" id="wAllow_other" value="0" step="0.5"></div>
     </div>
   </details>
-  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは各人5項目の内訳合計（保険料を含む・別計上・インフレ反映あり、子独立後の減額は非適用）</div>
+  <div class="note">※ 生活費は内訳10項目の合計。お小遣いは各人6項目の内訳合計（保険料・NISAを含む・別計上・インフレ反映あり、子独立後の減額は非適用）</div>
 
   <h2>🎓 教育費 <button class="view-detail-btn" onclick="showEduDetail()">📚 授業料 年次内訳</button></h2>
   <div class="field" style="background:#FDF3E0;padding:4px 6px;border-radius:6px;"><label><strong>① 授業料</strong>（プリセット）</label>
@@ -818,8 +820,8 @@ function simulate() {
   const livingBase = livingIds.reduce((sum, id) => sum + val(id), 0);
   const livingGrowth = val('livingGrowth') / 100;
   const postChildRatio = val('postChildRatio');
-  const husbandAllowIds = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_other'];
-  const wifeAllowIds = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_other'];
+  const husbandAllowIds = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_nisa','hAllow_other'];
+  const wifeAllowIds = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_nisa','wAllow_other'];
   const husbandAllow = husbandAllowIds.reduce((sum, id) => sum + val(id), 0);
   const wifeAllow = wifeAllowIds.reduce((sum, id) => sum + val(id), 0);
   const eduPresetKey = valStr('eduPreset');
@@ -994,8 +996,8 @@ function render(rows) {
   document.getElementById('livingTotalDisplay').textContent = livingMonthlyTotal.toFixed(1);
 
   // お小遣い内訳の合計表示
-  const husbandAllowIdsForDisplay = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_other'];
-  const wifeAllowIdsForDisplay = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_other'];
+  const husbandAllowIdsForDisplay = ['hAllow_lunch','hAllow_hobby','hAllow_social','hAllow_insurance','hAllow_nisa','hAllow_other'];
+  const wifeAllowIdsForDisplay = ['wAllow_lunch','wAllow_hobby','wAllow_social','wAllow_insurance','wAllow_nisa','wAllow_other'];
   document.getElementById('husbandAllowTotalDisplay').textContent = husbandAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
   document.getElementById('wifeAllowTotalDisplay').textContent = wifeAllowIdsForDisplay.reduce((s, id) => s + val(id), 0).toFixed(1);
 
@@ -1686,10 +1688,10 @@ async function exportToExcel() {
     const subtotalRow = wsM.addRow(['生活費 小計', r1_(livSum), '10項目合計']);
     subtotalRow.font = { italic: true };
     const hAllowItems = [
-      ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['その他', val('hAllow_other')]
+      ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['NISA', val('hAllow_nisa')], ['その他', val('hAllow_other')]
     ];
     const wAllowItems = [
-      ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['その他', val('wAllow_other')]
+      ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['NISA', val('wAllow_nisa')], ['その他', val('wAllow_other')]
     ];
     hAllowItems.forEach(([name, v_]) => wsM.addRow(['夫お小遣い：' + name, r1_(v_), 'お小遣い内訳']));
     const hAllowSubtotal = wsM.addRow(['夫お小遣い 小計', r1_(hAllowItems.reduce((s, x) => s + x[1], 0)), '4項目合計']);
@@ -1878,10 +1880,10 @@ function buildPdfHtml_() {
   let monthlyRowsHtml = livItems.map(([n, v]) => `<tr><td>${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">生活費10項目</td></tr>`).join('');
   monthlyRowsHtml += `<tr style="font-style:italic;"><td>生活費 小計</td><td style="text-align:right;">${r1_(livSum)}</td><td style="color:#999;">10項目合計</td></tr>`;
   const hAllowItemsPdf = [
-    ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['その他', val('hAllow_other')]
+    ['昼食代・カフェ', val('hAllow_lunch')], ['趣味・娯楽', val('hAllow_hobby')], ['交際費・飲み会', val('hAllow_social')], ['保険', val('hAllow_insurance')], ['NISA', val('hAllow_nisa')], ['その他', val('hAllow_other')]
   ];
   const wAllowItemsPdf = [
-    ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['その他', val('wAllow_other')]
+    ['昼食代・カフェ', val('wAllow_lunch')], ['趣味・娯楽', val('wAllow_hobby')], ['交際費・飲み会', val('wAllow_social')], ['保険', val('wAllow_insurance')], ['NISA', val('wAllow_nisa')], ['その他', val('wAllow_other')]
   ];
   monthlyRowsHtml += hAllowItemsPdf.map(([n, v]) => `<tr><td>夫お小遣い：${esc_(n)}</td><td style="text-align:right;">${r1_(v)}</td><td style="color:#999;">お小遣い内訳</td></tr>`).join('');
   monthlyRowsHtml += `<tr style="font-style:italic;"><td>夫お小遣い 小計</td><td style="text-align:right;">${r1_(hAllowItemsPdf.reduce((s, x) => s + x[1], 0))}</td><td style="color:#999;">4項目合計</td></tr>`;
